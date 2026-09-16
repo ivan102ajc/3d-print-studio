@@ -57,6 +57,7 @@ function App() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
+  const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceImageInputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +106,7 @@ function App() {
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      const sections = ['hero', 'about', 'services', 'printers', 'materials', 'calculator', 'gallery', 'location', 'contact'];
+      const sections = ['hero', 'about', 'services', 'makerworld', 'printers', 'materials', 'calculator', 'gallery', 'location', 'contact'];
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -261,6 +262,7 @@ function App() {
     { id: 'hero', label: 'Главная' },
     { id: 'about', label: 'О нас' },
     { id: 'services', label: 'Услуги' },
+    { id: 'makerworld', label: 'Каталог' },
     { id: 'printers', label: 'Оборудование' },
     { id: 'materials', label: 'Материалы' },
     { id: 'calculator', label: 'Калькулятор' },
@@ -575,6 +577,96 @@ function App() {
         </div>
       </section>
 
+      {/* MakerWorld Section */}
+      <section id="makerworld" className="relative z-10 py-16 sm:py-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <SectionTitle title="Каталог моделей" subtitle="Выберите готовую 3D-модель для печати" isDark={isDark} />
+          
+          <div className="mt-10 sm:mt-12 relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 blur" />
+            <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain}`}>
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 mb-4">
+                  <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>MakerWorld</h3>
+                <p className={`${textMuted} text-sm`}>Большая библиотека готовых 3D-моделей</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Ссылка на модель</label>
+                  <input
+                    type="url"
+                    placeholder="https://makerworld.com/ru/models/..."
+                    className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:outline-none transition-colors text-sm`}
+                    onChange={(e) => {
+                      const url = e.target.value.trim();
+                      if (url.includes('makerworld.com')) {
+                        setMakerWorldUrl(url);
+                      } else {
+                        setMakerWorldUrl('');
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="https://makerworld.com/ru"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:from-orange-400 hover:to-red-500 transition-all duration-300 shadow-lg shadow-orange-500/25 text-sm"
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Открыть каталог
+                  </a>
+                  {makerWorldUrl && (
+                    <a
+                      href={`https://t.me/ivanchay0937?text=${encodeURIComponent(`Хочу напечатать эту модель: ${makerWorldUrl}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-cyan-500/25 text-sm"
+                    >
+                      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                      </svg>
+                      Обсудить печать
+                    </a>
+                  )}
+                </div>
+
+                {makerWorldUrl && (
+                  <div className={`p-4 rounded-xl bg-orange-500/10 border border-orange-500/20`}>
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1 min-w-0">
+                        <p className={`${textPrimary} text-sm font-medium mb-1`}>Выбранная модель:</p>
+                        <a href={makerWorldUrl} target="_blank" rel="noopener noreferrer" className="text-orange-400 text-xs break-all hover:underline">
+                          {makerWorldUrl}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={`mt-6 pt-6 border-t ${borderMain}`}>
+                <p className={`${textMutedLight} text-xs text-center`}>
+                  💡 Скопируйте ссылку на модель из каталога MakerWorld и вставьте её выше
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Printers Section */}
       <section id="printers" className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
@@ -795,37 +887,7 @@ function App() {
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наши работы" subtitle="Примеры выполненных проектов" isDark={isDark} />
           
-          {/* Upload controls */}
-          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-dashed border-cyan-500/30 ${textMuted} hover:border-cyan-500/60 hover:text-cyan-400 transition-all text-sm`}
-            >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Добавить фото работ
-            </button>
-            {gallery.some(g => !g.isDefault) && (
-              <button
-                onClick={resetGallery}
-                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${borderMain} ${textMuted} ${hoverBg} transition-all text-sm`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Сбросить к исходным
-              </button>
-            )}
-          </div>
+
 
           {/* Gallery grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
@@ -997,21 +1059,21 @@ function App() {
               </div>
 
               <div className={`${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain}`}>
-                <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-green-400 mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-orange-400 mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                   </svg>
-                  Сайт
+                  Max
                 </h3>
-                <a href="https://sites.google.com/view/protolab-3d/главная-страница" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-xl ${bgCardAlt} ${hoverBg} transition-colors`}>
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <a href="https://max.ru/u/f9LHodD0cOJ4WswKoZ0gfs_dwKKmUdugV1HqBTNmTiMI0AyDcJAen50E6G4" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-xl ${bgCardAlt} ${hoverBg} transition-colors`}>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-orange-400" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                     </svg>
                   </div>
                   <div className="min-w-0">
-                    <div className={`${textPrimary} font-medium text-sm sm:text-base truncate`}>protolab-3d</div>
-                    <div className={`${textMuted} text-xs sm:text-sm`}>Google Sites</div>
+                    <div className={`${textPrimary} font-medium text-sm sm:text-base truncate`}>Написать в Max</div>
+                    <div className={`${textMuted} text-xs sm:text-sm`}>Мессенджер</div>
                   </div>
                 </a>
               </div>
