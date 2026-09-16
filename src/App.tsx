@@ -2,6 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 type Theme = 'dark' | 'light';
 
+type GalleryItem = {
+  src: string;
+  title: string;
+  subtitle: string;
+  isDefault?: boolean;
+};
+
 function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
@@ -17,8 +24,43 @@ function App() {
   const [calcComplexity, setCalcComplexity] = useState(1);
   const [calcQuantity, setCalcQuantity] = useState(1);
   const [calcUrgent, setCalcUrgent] = useState(false);
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+
+  // Equipment hero image
+  const [equipmentImage, setEquipmentImage] = useState<string>(
+    'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png'
+  );
+  const equipmentInputRef = useRef<HTMLInputElement>(null);
+
+  // Gallery items (with editable titles/subtitles)
+  const defaultGallery: GalleryItem[] = [
+    {
+      src: 'https://image.qwenlm.ai/generated-images/4190945e-14a9-4645-a92b-c86338e701cd/_result.png',
+      title: 'Процесс печати',
+      subtitle: 'Bambu Lab P1S • PETG',
+      isDefault: true,
+    },
+    {
+      src: 'https://image.qwenlm.ai/generated-images/00f58d60-985a-4dd4-91e2-a2c2e7af764f/_result.png',
+      title: 'Готовые изделия',
+      subtitle: 'Различные материалы',
+      isDefault: true,
+    },
+    {
+      src: 'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png',
+      title: 'Наша мастерская',
+      subtitle: '6 принтеров работают одновременно',
+      isDefault: true,
+    },
+  ];
+
+  const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSubtitle, setEditSubtitle] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceImageInputRef = useRef<HTMLInputElement>(null);
+  const replaceTargetIndex = useRef<number | null>(null);
 
   // Theme management
   useEffect(() => {
@@ -28,28 +70,37 @@ function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  // Load saved images from localStorage
+  // Load saved gallery from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('protolab-gallery');
+    const saved = localStorage.getItem('protolab-gallery-v2');
     if (saved) {
       try {
-        setGalleryImages(JSON.parse(saved));
+        const parsed = JSON.parse(saved) as GalleryItem[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setGallery(parsed);
+        }
       } catch {
         // ignore
       }
     }
+    const savedEquipment = localStorage.getItem('protolab-equipment-img');
+    if (savedEquipment) {
+      setEquipmentImage(savedEquipment);
+    }
   }, []);
 
-  // Save images to localStorage
+  // Save gallery to localStorage
   useEffect(() => {
-    if (galleryImages.length > 0) {
-      try {
-        localStorage.setItem('protolab-gallery', JSON.stringify(galleryImages));
-      } catch {
-        // storage full - ignore
-      }
+    try {
+      localStorage.setItem('protolab-gallery-v2', JSON.stringify(gallery));
+    } catch {
+      // storage full - ignore
     }
-  }, [galleryImages]);
+  }, [gallery]);
+
+  useEffect(() => {
+    localStorage.setItem('protolab-equipment-img', equipmentImage);
+  }, [equipmentImage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,29 +126,97 @@ function App() {
     setMobileMenuOpen(false);
   };
 
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    
-    Array.from(files).forEach(file => {
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        const result = ev.target?.result as string;
-        if (result) {
-          setGalleryImages(prev => [...prev, result]);
-        }
-      };
+      reader.onload = (ev) => resolve(ev.target?.result as string);
+      reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-    
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  };
+
+  // Equipment image upload
+  const handleEquipmentUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataURL(file);
+      setEquipmentImage(dataUrl);
+    } catch {
+      // ignore
     }
+    if (equipmentInputRef.current) equipmentInputRef.current.value = '';
   }, []);
 
+  const resetEquipmentImage = () => {
+    setEquipmentImage('https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png');
+  };
+
+  // Gallery: upload new images
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newItems: GalleryItem[] = [];
+    for (const file of Array.from(files)) {
+      try {
+        const dataUrl = await readFileAsDataURL(file);
+        newItems.push({
+          src: dataUrl,
+          title: 'Новая работа',
+          subtitle: 'Описание',
+        });
+      } catch {
+        // skip
+      }
+    }
+    if (newItems.length > 0) {
+      setGallery(prev => [...prev, ...newItems]);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  // Gallery: replace image at index
+  const handleReplaceImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const idx = replaceTargetIndex.current;
+    if (!file || idx === null) return;
+    try {
+      const dataUrl = await readFileAsDataURL(file);
+      setGallery(prev => prev.map((item, i) => i === idx ? { ...item, src: dataUrl } : item));
+    } catch {
+      // ignore
+    }
+    if (replaceImageInputRef.current) replaceImageInputRef.current.value = '';
+    replaceTargetIndex.current = null;
+  }, []);
+
+  const startEdit = (index: number) => {
+    setEditingIndex(index);
+    setEditTitle(gallery[index].title);
+    setEditSubtitle(gallery[index].subtitle);
+  };
+
+  const saveEdit = () => {
+    if (editingIndex === null) return;
+    setGallery(prev => prev.map((item, i) =>
+      i === editingIndex ? { ...item, title: editTitle, subtitle: editSubtitle } : item
+    ));
+    setEditingIndex(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(null);
+  };
+
   const removeImage = (index: number) => {
-    setGalleryImages(prev => prev.filter((_, i) => i !== index));
+    setGallery(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const resetGallery = () => {
+    if (confirm('Вернуть галерею к исходным фото? Ваши загруженные работы будут удалены.')) {
+      setGallery(defaultGallery);
+    }
   };
 
   const materials = [
@@ -123,7 +242,6 @@ function App() {
     if (!material) return 0;
     let price = material.price * calcWeight * calcComplexity * calcQuantity;
     if (calcUrgent) price *= 1.5;
-    // Discount for large orders
     if (calcQuantity >= 50) price *= 0.85;
     else if (calcQuantity >= 20) price *= 0.9;
     else if (calcQuantity >= 10) price *= 0.95;
@@ -150,7 +268,6 @@ function App() {
     { id: 'location', label: 'Контакты' },
   ];
 
-  // Theme classes
   const bgMain = isDark ? 'bg-[#0a0a1a]' : 'bg-[#f8fafc]';
   const bgCard = isDark ? 'bg-[#111827]' : 'bg-white';
   const bgCardAlt = isDark ? 'bg-[#0d1b2a]' : 'bg-gray-50';
@@ -163,9 +280,27 @@ function App() {
   const hoverBg = isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100';
   const navBg = isDark ? 'bg-[#0a0a1a]/90' : 'bg-white/90';
   const navBorder = isDark ? 'border-cyan-500/20' : 'border-gray-200';
+  const inputBg = isDark ? 'bg-[#0a0a1a]' : 'bg-white';
+  const inputBorder = isDark ? 'border-white/10 focus:border-cyan-500/50' : 'border-gray-300 focus:border-cyan-500';
 
   return (
     <div className={`min-h-screen ${bgMain} ${textPrimary} font-['Inter'] overflow-x-hidden transition-colors duration-300`}>
+      {/* Hidden file inputs */}
+      <input
+        ref={equipmentInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleEquipmentUpload}
+        className="hidden"
+      />
+      <input
+        ref={replaceImageInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleReplaceImage}
+        className="hidden"
+      />
+
       {/* Animated background */}
       <div className="fixed inset-0 z-0 transition-opacity duration-300">
         {isDark ? (
@@ -197,9 +332,9 @@ function App() {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrollY > 50 ? `${navBg} backdrop-blur-xl border-b ${navBorder}` : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center font-['Orbitron'] font-bold text-sm text-white">P3</div>
-              <span className="font-['Orbitron'] font-bold text-lg bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">ProtoLab 3D</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center font-['Orbitron'] font-bold text-sm text-white flex-shrink-0">P3</div>
+              <span className="font-['Orbitron'] font-bold text-base sm:text-lg bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent truncate">ProtoLab 3D</span>
             </div>
             
             {/* Desktop nav */}
@@ -208,12 +343,11 @@ function App() {
                 <button
                   key={item.id}
                   onClick={() => scrollTo(item.id)}
-                  className={`px-3 py-2 rounded-lg text-sm transition-all duration-300 whitespace-nowrap ${activeSection === item.id ? 'text-cyan-500 bg-cyan-500/10' : `${textMuted} ${textPrimary} hover:text-cyan-500 ${hoverBg}`}`}
+                  className={`px-3 py-2 rounded-lg text-sm transition-all duration-300 whitespace-nowrap ${activeSection === item.id ? 'text-cyan-500 bg-cyan-500/10' : `${textMuted} hover:text-cyan-500 ${hoverBg}`}`}
                 >
                   {item.label}
                 </button>
               ))}
-              {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
                 className={`ml-2 p-2 rounded-lg ${hoverBg} transition-all`}
@@ -261,7 +395,6 @@ function App() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className={`lg:hidden ${navBg} backdrop-blur-xl border-b ${navBorder}`}>
             <div className="px-4 py-3 space-y-1 max-h-[70vh] overflow-y-auto">
@@ -306,7 +439,6 @@ function App() {
             </button>
           </div>
           
-          {/* Stats */}
           <div className="mt-12 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto px-2">
             {[
               { value: '6', label: 'Принтеров' },
@@ -383,13 +515,10 @@ function App() {
           <SectionTitle title="Наши услуги" subtitle="Полный цикл от модели до готового изделия" isDark={isDark} />
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 mt-10 sm:mt-12">
-            {/* 3D Printing */}
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl opacity-0 group-hover:opacity-50 transition-opacity blur-sm" />
               <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain} ${borderHover} transition-all duration-300`}>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-2xl mb-4">
-                  🖨
-                </div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-2xl mb-4">🖨</div>
                 <h3 className={`font-['Orbitron'] text-base sm:text-lg font-bold ${textPrimary} mb-2`}>3D-печать</h3>
                 <p className={`${textMuted} text-sm mb-4`}>Печать деталей любой сложности на FDM-принтерах. От 1 штуки до серии.</p>
                 <div className={`text-xs ${textMutedLight} space-y-1`}>
@@ -400,13 +529,10 @@ function App() {
               </div>
             </div>
 
-            {/* 3D Modeling */}
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl opacity-0 group-hover:opacity-50 transition-opacity blur-sm" />
               <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain} ${borderHover} transition-all duration-300`}>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-2xl mb-4">
-                  🎨
-                </div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-2xl mb-4">🎨</div>
                 <h3 className={`font-['Orbitron'] text-base sm:text-lg font-bold ${textPrimary} mb-2`}>3D-моделирование</h3>
                 <p className={`${textMuted} text-sm mb-4`}>Создадим 3D-модель по вашим чертежам, эскизам или описанию.</p>
                 <div className={`text-xs ${textMutedLight} space-y-1`}>
@@ -417,13 +543,10 @@ function App() {
               </div>
             </div>
 
-            {/* 3D Scanning */}
             <div className="relative group sm:col-span-2 lg:col-span-1">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl opacity-0 group-hover:opacity-50 transition-opacity blur-sm" />
               <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain} ${borderHover} transition-all duration-300`}>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center text-2xl mb-4">
-                  📡
-                </div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center text-2xl mb-4">📡</div>
                 <h3 className={`font-['Orbitron'] text-base sm:text-lg font-bold ${textPrimary} mb-2`}>3D-сканирование</h3>
                 <p className={`${textMuted} text-sm mb-4`}>Оцифровка физических объектов для создания точных 3D-моделей.</p>
                 <div className={`text-xs ${textMutedLight} space-y-1`}>
@@ -435,10 +558,9 @@ function App() {
             </div>
           </div>
 
-          {/* Discount banner */}
           <div className={`mt-8 sm:mt-10 relative rounded-2xl overflow-hidden border ${borderMain}`}>
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10" />
-            <div className={`relative p-5 sm:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-6`}>
+            <div className="relative p-5 sm:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
               <div className="text-4xl sm:text-5xl">🎁</div>
               <div className="text-center sm:text-left">
                 <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-1`}>Скидки при больших заказах!</h3>
@@ -458,13 +580,51 @@ function App() {
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наше оборудование" subtitle="6 принтеров для любых задач" isDark={isDark} />
           
-          <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10">
+          {/* Equipment hero image with replace button */}
+          <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10 group">
             <img 
-              src="https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png" 
-              alt="Наша мастерская 3D-печати" 
-              className="w-full h-40 sm:h-64 object-cover opacity-60"
+              src={equipmentImage} 
+              alt="Наше оборудование" 
+              className="w-full h-48 sm:h-64 object-cover"
             />
-            <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-[#f8fafc]'} via-transparent to-transparent`} />
+            <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]/90' : 'from-black/70'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
+            
+            {/* Edit controls overlay */}
+            <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+              <button
+                onClick={() => equipmentInputRef.current?.click()}
+                className="px-4 py-2 rounded-xl bg-cyan-500/90 hover:bg-cyan-500 text-white text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Заменить фото
+              </button>
+              {equipmentImage !== 'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png' && (
+                <button
+                  onClick={resetEquipmentImage}
+                  className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Сбросить
+                </button>
+              )}
+            </div>
+
+            {/* Mobile edit button (always visible on mobile) */}
+            <div className="sm:hidden absolute bottom-3 right-3">
+              <button
+                onClick={() => equipmentInputRef.current?.click()}
+                className="w-10 h-10 rounded-full bg-cyan-500/90 text-white flex items-center justify-center shadow-lg"
+                title="Заменить фото"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
@@ -473,9 +633,7 @@ function App() {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-sm" />
                 <div className={`relative ${bgCard} rounded-xl p-4 sm:p-6 border ${borderMain} group-hover:border-cyan-500/30 transition-all duration-300`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center text-lg sm:text-xl flex-shrink-0`}>
-                      🖨
-                    </div>
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center text-lg sm:text-xl flex-shrink-0`}>🖨</div>
                     <h3 className={`font-['Orbitron'] text-xs sm:text-sm font-bold ${textPrimary} leading-tight`}>{printer.name}</h3>
                   </div>
                   <p className={`${textMuted} text-xs sm:text-sm mb-2`}>{printer.features}</p>
@@ -528,13 +686,12 @@ function App() {
             <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-2xl opacity-20 blur" />
             <div className={`relative ${bgCard} rounded-2xl p-4 sm:p-8 border ${borderMain}`}>
               <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Material */}
                 <div>
                   <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Материал</label>
                   <select 
                     value={calcMaterial} 
                     onChange={(e) => setCalcMaterial(e.target.value)}
-                    className={`w-full ${bgCardAlt} border ${borderMain} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:border-cyan-500/50 focus:outline-none transition-colors text-sm`}
+                    className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:outline-none transition-colors text-sm`}
                   >
                     {materials.map(m => (
                       <option key={m.name} value={m.name}>{m.name} — {m.price} ₽/г</option>
@@ -542,7 +699,6 @@ function App() {
                   </select>
                 </div>
 
-                {/* Weight */}
                 <div>
                   <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Вес (грамм)</label>
                   <input 
@@ -556,7 +712,6 @@ function App() {
                   <div className="text-cyan-500 font-['Orbitron'] text-base sm:text-lg mt-1">{calcWeight} г</div>
                 </div>
 
-                {/* Complexity */}
                 <div className="sm:col-span-2">
                   <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Сложность</label>
                   <div className="flex gap-2">
@@ -576,7 +731,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Quantity */}
                 <div>
                   <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Количество (шт)</label>
                   <input 
@@ -585,11 +739,10 @@ function App() {
                     max="10000"
                     value={calcQuantity}
                     onChange={(e) => setCalcQuantity(Math.max(1, Number(e.target.value)))}
-                    className={`w-full ${bgCardAlt} border ${borderMain} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:border-cyan-500/50 focus:outline-none transition-colors text-sm`}
+                    className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:outline-none transition-colors text-sm`}
                   />
                 </div>
 
-                {/* Urgent */}
                 <div className="flex items-end">
                   <div className={`flex items-center gap-3 p-3 rounded-xl ${bgCardAlt} w-full`}>
                     <button
@@ -603,15 +756,13 @@ function App() {
                 </div>
               </div>
 
-              {/* Discount info */}
               {getDiscount() > 0 && (
-                <div className={`mt-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center`}>
+                <div className="mt-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center">
                   <span className="text-green-400 text-sm font-semibold">🎉 Скидка {getDiscount()}% за большой заказ!</span>
                 </div>
               )}
 
-              {/* Result */}
-              <div className={`mt-6 sm:mt-8 p-5 sm:p-6 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20`}>
+              <div className="mt-6 sm:mt-8 p-5 sm:p-6 rounded-xl bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
                 <div className="text-center">
                   <div className={`${textMuted} text-xs sm:text-sm mb-1`}>Примерная стоимость</div>
                   <div className="font-['Orbitron'] text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
@@ -644,7 +795,7 @@ function App() {
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наши работы" subtitle="Примеры выполненных проектов" isDark={isDark} />
           
-          {/* Upload button */}
+          {/* Upload controls */}
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
             <input
               ref={fileInputRef}
@@ -659,89 +810,135 @@ function App() {
               className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-dashed border-cyan-500/30 ${textMuted} hover:border-cyan-500/60 hover:text-cyan-400 transition-all text-sm`}
             >
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Загрузить фото работ
+              Добавить фото работ
             </button>
-            {galleryImages.length > 0 && (
-              <span className={`${textMutedLight} text-xs`}>Загружено: {galleryImages.length}</span>
+            {gallery.some(g => !g.isDefault) && (
+              <button
+                onClick={resetGallery}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${borderMain} ${textMuted} ${hoverBg} transition-all text-sm`}
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Сбросить к исходным
+              </button>
             )}
           </div>
 
           {/* Gallery grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
-            {/* AI generated images */}
-            <div className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300">
-              <img 
-                src="https://image.qwenlm.ai/generated-images/4190945e-14a9-4645-a92b-c86338e701cd/_result.png" 
-                alt="3D печать на Bambu Lab P1S" 
-                className="w-full h-48 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/70'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-              <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white font-['Orbitron'] text-xs sm:text-sm">Процесс печати</p>
-                <p className="text-gray-300 text-xs">Bambu Lab P1S • PETG</p>
-              </div>
-            </div>
-            
-            <div className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-purple-500/30 transition-all duration-300">
-              <img 
-                src="https://image.qwenlm.ai/generated-images/00f58d60-985a-4dd4-91e2-a2c2e7af764f/_result.png" 
-                alt="Напечатанные изделия" 
-                className="w-full h-48 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/70'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-              <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white font-['Orbitron'] text-xs sm:text-sm">Готовые изделия</p>
-                <p className="text-gray-300 text-xs">Различные материалы</p>
-              </div>
-            </div>
-
-            <div className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300 sm:col-span-2 lg:col-span-1">
-              <img 
-                src="https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png" 
-                alt="Мастерская 3D-печати" 
-                className="w-full h-48 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/70'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-              <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white font-['Orbitron'] text-xs sm:text-sm">Наша мастерская</p>
-                <p className="text-gray-300 text-xs">6 принтеров работают одновременно</p>
-              </div>
-            </div>
-
-            {/* User uploaded images */}
-            {galleryImages.map((img, i) => (
-              <div key={`user-${i}`} className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300">
+            {gallery.map((item, i) => (
+              <div key={i} className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300">
                 <img 
-                  src={img} 
-                  alt={`Работа ${i + 1}`} 
-                  className="w-full h-48 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-500"
+                  src={item.src} 
+                  alt={item.title} 
+                  className="w-full h-48 sm:h-64 object-cover"
                 />
-                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/70'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-                <button
-                  onClick={() => removeImage(i)}
-                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                  title="Удалить фото"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-                <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white font-['Orbitron'] text-xs sm:text-sm">Ваша работа</p>
-                  <p className="text-gray-300 text-xs">Загружено пользователем</p>
+                
+                {/* Overlay with info */}
+                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent ${editingIndex === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                  
+                  {/* Edit mode */}
+                  {editingIndex === i ? (
+                    <div className="absolute inset-0 flex items-end p-3 sm:p-4 bg-black/70 backdrop-blur-sm">
+                      <div className="w-full space-y-2">
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          placeholder="Заголовок"
+                          className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} text-sm focus:outline-none`}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <input
+                          type="text"
+                          value={editSubtitle}
+                          onChange={(e) => setEditSubtitle(e.target.value)}
+                          placeholder="Подпись"
+                          className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} text-sm focus:outline-none`}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); saveEdit(); }}
+                            className="flex-1 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-white text-sm font-medium transition-colors"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
+                            className="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Caption */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                        <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
+                        <p className="text-gray-300 text-xs">{item.subtitle}</p>
+                      </div>
+
+                      {/* Action buttons (on hover) */}
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startEdit(i); }}
+                          className="w-8 h-8 rounded-full bg-cyan-500/80 hover:bg-cyan-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors"
+                          title="Редактировать подпись"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            replaceTargetIndex.current = i;
+                            replaceImageInputRef.current?.click();
+                          }}
+                          className="w-8 h-8 rounded-full bg-purple-500/80 hover:bg-purple-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors"
+                          title="Заменить фото"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                          className="w-8 h-8 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors"
+                          title="Удалить"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                {/* Mobile edit button (always visible) */}
+                {editingIndex !== i && (
+                  <div className="sm:hidden absolute top-2 right-2 flex gap-1.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); startEdit(i); }}
+                      className="w-8 h-8 rounded-full bg-cyan-500/90 text-white flex items-center justify-center shadow-lg"
+                      title="Редактировать"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-
-          {galleryImages.length === 0 && (
-            <div className={`mt-8 text-center ${textMuted} text-sm`}>
-              <p>Загрузите фото ваших реальных работ, чтобы они появились в галерее.</p>
-              <p className="text-xs mt-1 opacity-70">Фото сохраняются в браузере</p>
-            </div>
-          )}
         </div>
       </section>
 
@@ -751,9 +948,7 @@ function App() {
           <SectionTitle title="Контакты" subtitle="Свяжитесь с нами любым удобным способом" isDark={isDark} />
           
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mt-10 sm:mt-12">
-            {/* Contact info */}
             <div className="space-y-4 sm:space-y-6">
-              {/* Address */}
               <div className={`${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain}`}>
                 <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-cyan-500 mb-4 flex items-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -768,7 +963,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Telegram */}
               <div className={`${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain}`}>
                 <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-blue-400 mb-4 flex items-center gap-2">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -802,7 +996,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Website */}
               <div className={`${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain}`}>
                 <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-green-400 mb-4 flex items-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -823,7 +1016,6 @@ function App() {
                 </a>
               </div>
 
-              {/* Work conditions */}
               <div className={`${bgCard} rounded-2xl p-5 sm:p-6 border ${borderMain}`}>
                 <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-yellow-400 mb-4 flex items-center gap-2">
                   <span className="text-xl">📋</span>
@@ -858,7 +1050,6 @@ function App() {
               </div>
             </div>
 
-            {/* Map */}
             <div className={`${bgCard} rounded-2xl overflow-hidden border ${borderMain} h-fit`}>
               <div className={`p-4 sm:p-5 border-b ${borderMain}`}>
                 <h3 className="font-['Orbitron'] text-base sm:text-lg font-bold text-cyan-500">Местоположение</h3>
@@ -899,7 +1090,6 @@ function App() {
         </div>
       </footer>
 
-      {/* Floating particles (dark theme only) */}
       {isDark && (
         <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
           {[...Array(15)].map((_, i) => (
