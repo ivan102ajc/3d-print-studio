@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { db } from './db';
 
 type Theme = 'dark' | 'light';
 
@@ -57,6 +58,7 @@ function App() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
+  const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceImageInputRef = useRef<HTMLInputElement>(null);
@@ -70,42 +72,53 @@ function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  // Load saved gallery from localStorage
+  // Load saved gallery and equipment from IndexedDB
   useEffect(() => {
-    const saved = localStorage.getItem('protolab-gallery-v2');
-    if (saved) {
+    const loadData = async () => {
       try {
-        const parsed = JSON.parse(saved) as GalleryItem[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setGallery(parsed);
+        const savedGallery = await db.get<GalleryItem[]>('gallery');
+        if (savedGallery && Array.isArray(savedGallery) && savedGallery.length > 0) {
+          setGallery(savedGallery);
         }
-      } catch {
-        // ignore
+        const savedEquipment = await db.get<string>('equipment');
+        if (savedEquipment) {
+          setEquipmentImage(savedEquipment);
+        }
+      } catch (error) {
+        console.error('Failed to load data from IndexedDB:', error);
       }
-    }
-    const savedEquipment = localStorage.getItem('protolab-equipment-img');
-    if (savedEquipment) {
-      setEquipmentImage(savedEquipment);
-    }
+    };
+    loadData();
   }, []);
 
-  // Save gallery to localStorage
+  // Save gallery to IndexedDB
   useEffect(() => {
-    try {
-      localStorage.setItem('protolab-gallery-v2', JSON.stringify(gallery));
-    } catch {
-      // storage full - ignore
-    }
+    const saveData = async () => {
+      try {
+        await db.set('gallery', gallery);
+      } catch (error) {
+        console.error('Failed to save gallery:', error);
+      }
+    };
+    saveData();
   }, [gallery]);
 
+  // Save equipment image to IndexedDB
   useEffect(() => {
-    localStorage.setItem('protolab-equipment-img', equipmentImage);
+    const saveData = async () => {
+      try {
+        await db.set('equipment', equipmentImage);
+      } catch (error) {
+        console.error('Failed to save equipment image:', error);
+      }
+    };
+    saveData();
   }, [equipmentImage]);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      const sections = ['hero', 'about', 'makerworld', 'services', 'printers', 'materials', 'calculator', 'gallery', 'location', 'contact'];
+      const sections = ['hero', 'about', 'services', 'printers', 'materials', 'calculator', 'gallery', 'makerworld', 'location', 'contact'];
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -260,12 +273,12 @@ function App() {
   const navItems = [
     { id: 'hero', label: 'Главная' },
     { id: 'about', label: 'О нас' },
-    { id: 'makerworld', label: 'Каталог' },
     { id: 'services', label: 'Услуги' },
     { id: 'printers', label: 'Оборудование' },
     { id: 'materials', label: 'Материалы' },
     { id: 'calculator', label: 'Калькулятор' },
     { id: 'gallery', label: 'Работы' },
+    { id: 'makerworld', label: 'Каталог' },
     { id: 'location', label: 'Контакты' },
   ];
 
@@ -504,51 +517,6 @@ function App() {
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MakerWorld Section */}
-      <section id="makerworld" className="relative z-10 py-16 sm:py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <SectionTitle title="Каталог моделей" subtitle="Выберите готовую 3D-модель для печати" isDark={isDark} />
-          
-          <div className="mt-10 sm:mt-12 relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 blur" />
-            <div className={`relative ${bgCard} rounded-2xl overflow-hidden border ${borderMain}`}>
-              <div className={`p-4 sm:p-5 border-b ${borderMain} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3`}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className={`font-['Orbitron'] text-base sm:text-lg font-bold ${textPrimary}`}>MakerWorld</h3>
-                    <p className={`${textMuted} text-xs sm:text-sm`}>Библиотека готовых 3D-моделей</p>
-                  </div>
-                </div>
-                <a
-                  href="https://makerworld.com/ru"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-medium hover:from-orange-400 hover:to-red-500 transition-all flex-shrink-0"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Открыть в новой вкладке
-                </a>
-              </div>
-              <div className="relative h-[500px] sm:h-[600px]">
-                <iframe
-                  src="https://makerworld.com/ru"
-                  className="w-full h-full border-0"
-                  title="MakerWorld - Каталог 3D-моделей"
-                  allow="clipboard-read; clipboard-write"
-                />
               </div>
             </div>
           </div>
@@ -820,7 +788,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="mt-6 text-center">
+              <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
                 <a 
                   href="https://t.me/ivanchay0937" 
                   target="_blank" 
@@ -830,7 +798,18 @@ function App() {
                   <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
                   </svg>
-                  Обсудить заказ в Telegram
+                  Обсудить в Telegram
+                </a>
+                <a 
+                  href="https://max.ru/u/f9LHodD0cOJ4WswKoZ0gfs_dwKKmUdugV1HqBTNmTiMI0AyDcJAen50E6G4" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#0077FF] to-[#0055CC] text-white font-semibold hover:from-[#0088FF] hover:to-[#0066DD] transition-all duration-300 shadow-lg shadow-[#0077FF]/25 text-sm sm:text-base"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                  </svg>
+                  Обсудить в Max
                 </a>
               </div>
             </div>
@@ -985,6 +964,96 @@ function App() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MakerWorld Section */}
+      <section id="makerworld" className="relative z-10 py-16 sm:py-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <SectionTitle title="Каталог моделей" subtitle="Выберите готовую 3D-модель для печати" isDark={isDark} />
+          
+          <div className="mt-10 sm:mt-12 relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 blur" />
+            <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain}`}>
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 mb-4">
+                  <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>MakerWorld</h3>
+                <p className={`${textMuted} text-sm`}>Большая библиотека готовых 3D-моделей</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Ссылка на модель</label>
+                  <input
+                    type="url"
+                    placeholder="https://makerworld.com/ru/models/..."
+                    className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:outline-none transition-colors text-sm`}
+                    onChange={(e) => {
+                      const url = e.target.value.trim();
+                      if (url.includes('makerworld.com')) {
+                        setMakerWorldUrl(url);
+                      } else {
+                        setMakerWorldUrl('');
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="https://makerworld.com/ru"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:from-orange-400 hover:to-red-500 transition-all duration-300 shadow-lg shadow-orange-500/25 text-sm"
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Открыть каталог
+                  </a>
+                  {makerWorldUrl && (
+                    <a
+                      href={`https://t.me/ivanchay0937?text=${encodeURIComponent(`Хочу напечатать эту модель: ${makerWorldUrl}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-cyan-500/25 text-sm"
+                    >
+                      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                      </svg>
+                      Обсудить печать
+                    </a>
+                  )}
+                </div>
+
+                {makerWorldUrl && (
+                  <div className={`p-4 rounded-xl bg-orange-500/10 border border-orange-500/20`}>
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1 min-w-0">
+                        <p className={`${textPrimary} text-sm font-medium mb-1`}>Выбранная модель:</p>
+                        <a href={makerWorldUrl} target="_blank" rel="noopener noreferrer" className="text-orange-400 text-xs break-all hover:underline">
+                          {makerWorldUrl}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={`mt-6 pt-6 border-t ${borderMain}`}>
+                <p className={`${textMutedLight} text-xs text-center`}>
+                  💡 Скопируйте ссылку на модель из каталога MakerWorld и вставьте её выше
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
