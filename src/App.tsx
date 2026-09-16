@@ -73,15 +73,44 @@ function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  // Load saved gallery and equipment from IndexedDB
+  // Load saved gallery and equipment from IndexedDB (with localStorage migration)
   useEffect(() => {
     const loadData = async () => {
       try {
-        const savedGallery = await db.get<GalleryItem[]>('gallery');
+        // Try to load from IndexedDB first
+        let savedGallery = await db.get<GalleryItem[]>('gallery');
+        let savedEquipment = await db.get<string>('equipment');
+
+        // Migrate from localStorage if IndexedDB is empty
+        if (!savedGallery || savedGallery.length === 0) {
+          const oldGallery = localStorage.getItem('protolab-gallery-v2');
+          if (oldGallery) {
+            try {
+              const parsed = JSON.parse(oldGallery) as GalleryItem[];
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                savedGallery = parsed;
+                await db.set('gallery', parsed);
+                console.log('Migrated gallery from localStorage to IndexedDB');
+              }
+            } catch (e) {
+              console.error('Failed to parse old gallery data:', e);
+            }
+          }
+        }
+
+        if (!savedEquipment) {
+          const oldEquipment = localStorage.getItem('protolab-equipment-img');
+          if (oldEquipment) {
+            savedEquipment = oldEquipment;
+            await db.set('equipment', oldEquipment);
+            console.log('Migrated equipment image from localStorage to IndexedDB');
+          }
+        }
+
+        // Apply loaded data
         if (savedGallery && Array.isArray(savedGallery) && savedGallery.length > 0) {
           setGallery(savedGallery);
         }
-        const savedEquipment = await db.get<string>('equipment');
         if (savedEquipment) {
           setEquipmentImage(savedEquipment);
         }
