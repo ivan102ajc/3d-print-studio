@@ -59,6 +59,7 @@ function App() {
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
   const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceImageInputRef = useRef<HTMLInputElement>(null);
@@ -86,13 +87,16 @@ function App() {
         }
       } catch (error) {
         console.error('Failed to load data from IndexedDB:', error);
+      } finally {
+        setDataLoaded(true);
       }
     };
     loadData();
   }, []);
 
-  // Save gallery to IndexedDB
+  // Save gallery to IndexedDB (only after data is loaded)
   useEffect(() => {
+    if (!dataLoaded) return;
     const saveData = async () => {
       try {
         await db.set('gallery', gallery);
@@ -101,19 +105,23 @@ function App() {
       }
     };
     saveData();
-  }, [gallery]);
+  }, [gallery, dataLoaded]);
 
-  // Save equipment image to IndexedDB
+  // Save equipment image to IndexedDB (only if not default and after data is loaded)
   useEffect(() => {
+    if (!dataLoaded) return;
     const saveData = async () => {
       try {
-        await db.set('equipment', equipmentImage);
+        // Only save if it's different from default
+        if (equipmentImage !== 'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png') {
+          await db.set('equipment', equipmentImage);
+        }
       } catch (error) {
         console.error('Failed to save equipment image:', error);
       }
     };
     saveData();
-  }, [equipmentImage]);
+  }, [equipmentImage, dataLoaded]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -161,8 +169,13 @@ function App() {
     if (equipmentInputRef.current) equipmentInputRef.current.value = '';
   }, []);
 
-  const resetEquipmentImage = () => {
+  const resetEquipmentImage = async () => {
     setEquipmentImage('https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png');
+    try {
+      await db.delete('equipment');
+    } catch (error) {
+      console.error('Failed to delete equipment image:', error);
+    }
   };
 
   // Gallery: upload new images
