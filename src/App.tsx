@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { db } from './db';
+import { useState, useEffect, useRef } from 'react';
 
 type Theme = 'dark' | 'light';
 
@@ -28,26 +27,32 @@ function App() {
 
   // Equipment hero image
   const [equipmentImage, setEquipmentImage] = useState<string>(
-    'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png'
+    'https://image.qwenlm.ai/generated-images/e2ca4f38-d31f-47b9-ae6e-64bbb59453aa/_result.png'
   );
   const equipmentInputRef = useRef<HTMLInputElement>(null);
 
   // Gallery items (with editable titles/subtitles)
   const defaultGallery: GalleryItem[] = [
     {
-      src: 'https://image.qwenlm.ai/generated-images/4190945e-14a9-4645-a92b-c86338e701cd/_result.png',
+      src: 'https://image.qwenlm.ai/generated-images/d038f662-7220-4be7-adba-6aadd11fe846/_result.png',
       title: 'Процесс печати',
       subtitle: 'Bambu Lab P1S • PETG',
       isDefault: true,
     },
     {
-      src: 'https://image.qwenlm.ai/generated-images/00f58d60-985a-4dd4-91e2-a2c2e7af764f/_result.png',
+      src: 'https://image.qwenlm.ai/generated-images/a4d8ad92-08a1-46ad-97a8-292fe4894e7f/_result.png',
       title: 'Готовые изделия',
       subtitle: 'Различные материалы',
       isDefault: true,
     },
     {
-      src: 'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png',
+      src: 'https://image.qwenlm.ai/generated-images/34646eaf-7a28-4714-a181-ad04721ecb66/_result.png',
+      title: 'Функциональные детали',
+      subtitle: 'Электроника и крепления',
+      isDefault: true,
+    },
+    {
+      src: 'https://image.qwenlm.ai/generated-images/e2ca4f38-d31f-47b9-ae6e-64bbb59453aa/_result.png',
       title: 'Наша мастерская',
       subtitle: '6 принтеров работают одновременно',
       isDefault: true,
@@ -59,7 +64,6 @@ function App() {
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
   const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
-  const [dataLoaded, setDataLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceImageInputRef = useRef<HTMLInputElement>(null);
@@ -72,85 +76,6 @@ function App() {
   }, [theme]);
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-
-  // Load saved gallery and equipment from IndexedDB (with localStorage migration)
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Try to load from IndexedDB first
-        let savedGallery = await db.get<GalleryItem[]>('gallery');
-        let savedEquipment = await db.get<string>('equipment');
-
-        // Migrate from localStorage if IndexedDB is empty
-        if (!savedGallery || savedGallery.length === 0) {
-          const oldGallery = localStorage.getItem('protolab-gallery-v2');
-          if (oldGallery) {
-            try {
-              const parsed = JSON.parse(oldGallery) as GalleryItem[];
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                savedGallery = parsed;
-                await db.set('gallery', parsed);
-                console.log('Migrated gallery from localStorage to IndexedDB');
-              }
-            } catch (e) {
-              console.error('Failed to parse old gallery data:', e);
-            }
-          }
-        }
-
-        if (!savedEquipment) {
-          const oldEquipment = localStorage.getItem('protolab-equipment-img');
-          if (oldEquipment) {
-            savedEquipment = oldEquipment;
-            await db.set('equipment', oldEquipment);
-            console.log('Migrated equipment image from localStorage to IndexedDB');
-          }
-        }
-
-        // Apply loaded data
-        if (savedGallery && Array.isArray(savedGallery) && savedGallery.length > 0) {
-          setGallery(savedGallery);
-        }
-        if (savedEquipment) {
-          setEquipmentImage(savedEquipment);
-        }
-      } catch (error) {
-        console.error('Failed to load data from IndexedDB:', error);
-      } finally {
-        setDataLoaded(true);
-      }
-    };
-    loadData();
-  }, []);
-
-  // Save gallery to IndexedDB (only after data is loaded)
-  useEffect(() => {
-    if (!dataLoaded) return;
-    const saveData = async () => {
-      try {
-        await db.set('gallery', gallery);
-      } catch (error) {
-        console.error('Failed to save gallery:', error);
-      }
-    };
-    saveData();
-  }, [gallery, dataLoaded]);
-
-  // Save equipment image to IndexedDB (only if not default and after data is loaded)
-  useEffect(() => {
-    if (!dataLoaded) return;
-    const saveData = async () => {
-      try {
-        // Only save if it's different from default
-        if (equipmentImage !== 'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png') {
-          await db.set('equipment', equipmentImage);
-        }
-      } catch (error) {
-        console.error('Failed to save equipment image:', error);
-      }
-    };
-    saveData();
-  }, [equipmentImage, dataLoaded]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -186,7 +111,7 @@ function App() {
   };
 
   // Equipment image upload
-  const handleEquipmentUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEquipmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -196,19 +121,14 @@ function App() {
       // ignore
     }
     if (equipmentInputRef.current) equipmentInputRef.current.value = '';
-  }, []);
+  };
 
-  const resetEquipmentImage = async () => {
-    setEquipmentImage('https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png');
-    try {
-      await db.delete('equipment');
-    } catch (error) {
-      console.error('Failed to delete equipment image:', error);
-    }
+  const resetEquipmentImage = () => {
+    setEquipmentImage('https://image.qwenlm.ai/generated-images/e2ca4f38-d31f-47b9-ae6e-64bbb59453aa/_result.png');
   };
 
   // Gallery: upload new images
-  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
@@ -229,10 +149,10 @@ function App() {
       setGallery(prev => [...prev, ...newItems]);
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
+  };
 
   // Gallery: replace image at index
-  const handleReplaceImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReplaceImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const idx = replaceTargetIndex.current;
     if (!file || idx === null) return;
@@ -244,7 +164,7 @@ function App() {
     }
     if (replaceImageInputRef.current) replaceImageInputRef.current.value = '';
     replaceTargetIndex.current = null;
-  }, []);
+  };
 
   const startEdit = (index: number) => {
     setEditingIndex(index);
