@@ -27,7 +27,7 @@ function App() {
 
   // Equipment hero image
   const [equipmentImage, setEquipmentImage] = useState<string>(
-    'https://i.imgur.com/2HIpvpO_d.webp?maxwidth=760&fidelity=grand'
+    'https://i.imgur.com/2HIpvpO.jpg'
   );
   const equipmentInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,7 +172,7 @@ function App() {
   };
 
   const resetEquipmentImage = () => {
-    setEquipmentImage('https://i.imgur.com/2HIpvpO_d.webp?maxwidth=760&fidelity=grand');
+    setEquipmentImage('https://i.imgur.com/2HIpvpO.jpg');
   };
 
   // Gallery: upload new images
