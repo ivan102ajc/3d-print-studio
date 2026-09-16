@@ -27,7 +27,7 @@ function App() {
 
   // Equipment hero image
   const [equipmentImage, setEquipmentImage] = useState<string>(
-    'https://image.qwenlm.ai/generated-images/e2ca4f38-d31f-47b9-ae6e-64bbb59453aa/_result.png'
+    'https://i.imgur.com/2HIpvpO_d.webp?maxwidth=760&fidelity=grand'
   );
   const equipmentInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,7 +172,7 @@ function App() {
   };
 
   const resetEquipmentImage = () => {
-    setEquipmentImage('https://image.qwenlm.ai/generated-images/e2ca4f38-d31f-47b9-ae6e-64bbb59453aa/_result.png');
+    setEquipmentImage('https://i.imgur.com/2HIpvpO_d.webp?maxwidth=760&fidelity=grand');
   };
 
   // Gallery: upload new images
