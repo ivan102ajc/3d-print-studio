@@ -609,51 +609,13 @@ function App() {
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наше оборудование" subtitle="6 принтеров для любых задач" isDark={isDark} />
           
-          {/* Equipment hero image with replace button */}
-          <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10 group">
+          {/* Equipment hero image */}
+          <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10">
             <img 
               src={equipmentImage} 
               alt="Наше оборудование" 
               className="w-full h-48 sm:h-64 object-cover"
             />
-            <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]/90' : 'from-black/70'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-            
-            {/* Edit controls overlay */}
-            <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
-              <button
-                onClick={() => equipmentInputRef.current?.click()}
-                className="px-4 py-2 rounded-xl bg-cyan-500/90 hover:bg-cyan-500 text-white text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Заменить фото
-              </button>
-              {equipmentImage !== 'https://image.qwenlm.ai/generated-images/e8aad0eb-7b20-4090-b283-fb7428f71b9f/_result.png' && (
-                <button
-                  onClick={resetEquipmentImage}
-                  className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Сбросить
-                </button>
-              )}
-            </div>
-
-            {/* Mobile edit button (always visible on mobile) */}
-            <div className="sm:hidden absolute bottom-3 right-3">
-              <button
-                onClick={() => equipmentInputRef.current?.click()}
-                className="w-10 h-10 rounded-full bg-cyan-500/90 text-white flex items-center justify-center shadow-lg"
-                title="Заменить фото"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
@@ -835,38 +797,6 @@ function App() {
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наши работы" subtitle="Примеры выполненных проектов" isDark={isDark} />
           
-          {/* Upload controls */}
-          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-dashed border-cyan-500/30 ${textMuted} hover:border-cyan-500/60 hover:text-cyan-400 transition-all text-sm`}
-            >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Добавить фото работ
-            </button>
-            {gallery.some(g => !g.isDefault) && (
-              <button
-                onClick={resetGallery}
-                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${borderMain} ${textMuted} ${hoverBg} transition-all text-sm`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Сбросить к исходным
-              </button>
-            )}
-          </div>
-
           {/* Gallery grid */}          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
             {gallery.map((item, i) => (
               <div key={i} className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300">
@@ -876,105 +806,13 @@ function App() {
                   className="w-full h-48 sm:h-64 object-cover"
                 />
                 
-                {/* Overlay with info */}
-                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent ${editingIndex === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                  
-                  {/* Edit mode */}
-                  {editingIndex === i ? (
-                    <div className="absolute inset-0 flex items-end p-3 sm:p-4 bg-black/70 backdrop-blur-sm">
-                      <div className="w-full space-y-2">
-                        <input
-                          type="text"
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          placeholder="Заголовок"
-                          className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} text-sm focus:outline-none`}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <input
-                          type="text"
-                          value={editSubtitle}
-                          onChange={(e) => setEditSubtitle(e.target.value)}
-                          placeholder="Подпись"
-                          className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} text-sm focus:outline-none`}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); saveEdit(); }}
-                            className="flex-1 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-white text-sm font-medium transition-colors"
-                          >
-                            Сохранить
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
-                            className="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors"
-                          >
-                            Отмена
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Caption */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                        <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
-                        <p className="text-gray-300 text-xs">{item.subtitle}</p>
-                      </div>
-
-                      {/* Action buttons (on hover) */}
-                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); startEdit(i); }}
-                          className="w-8 h-8 rounded-full bg-cyan-500/80 hover:bg-cyan-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors"
-                          title="Редактировать подпись"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            replaceTargetIndex.current = i;
-                            replaceImageInputRef.current?.click();
-                          }}
-                          className="w-8 h-8 rounded-full bg-purple-500/80 hover:bg-purple-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors"
-                          title="Заменить фото"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                          className="w-8 h-8 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors"
-                          title="Удалить"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Mobile edit button (always visible) */}
-                {editingIndex !== i && (
-                  <div className="sm:hidden absolute top-2 right-2 flex gap-1.5">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); startEdit(i); }}
-                      className="w-8 h-8 rounded-full bg-cyan-500/90 text-white flex items-center justify-center shadow-lg"
-                      title="Редактировать"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
+                {/* Overlay with caption */}
+                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}>
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                    <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
+                    <p className="text-gray-300 text-xs">{item.subtitle}</p>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
