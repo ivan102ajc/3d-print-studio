@@ -104,6 +104,7 @@ function App() {
 
   const [gallery] = useState<GalleryItem[]>(defaultGallery);
   const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
 
   useEffect(() => {
     localStorage.setItem('protolab-theme', theme);
@@ -138,8 +139,8 @@ function App() {
 
   const materials = [
     { name: 'PLA', desc: 'Декоративные изделия и прототипы', price: 8, color: '#00f0ff' },
-    { name: 'PETG', desc: 'Прочность и универсальность', price: 10, color: '#7b61ff' },
-    { name: 'ABS', desc: 'Устойчивость к температурам', price: 12, color: '#ff6b6b' },
+    { name: 'PETG', desc: 'Прочность и универсальность', price: 8, color: '#7b61ff' },
+    { name: 'ABS', desc: 'Устойчивость к температурам', price: 8, color: '#ff6b6b' },
     { name: 'TPU', desc: 'Гибкие детали', price: 15, color: '#ffd93d' },
     { name: 'PA12/PA6/PA66', desc: 'Инженерные материалы', price: 25, color: '#6bff9e' },
     { name: 'Карбононаполненные', desc: 'Повышенная жёсткость и прочность', price: 30, color: '#ff9e6b' },
@@ -441,7 +442,10 @@ function App() {
       <section id="printers" className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наше оборудование" subtitle="6 принтеров для любых задач" isDark={isDark} />
-          <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10">
+          <div 
+            className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10 cursor-pointer hover:border-cyan-500/30 transition-all duration-300"
+            onClick={() => setSelectedImage({ src: equipmentImage, title: 'Наше оборудование', subtitle: '6 принтеров для любых задач' })}
+          >
             <img src={equipmentImage} alt="Наше оборудование" className="w-full h-48 sm:h-64 object-cover" />
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
@@ -564,7 +568,11 @@ function App() {
           <SectionTitle title="Наши работы" subtitle="Примеры выполненных проектов" isDark={isDark} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
             {gallery.map((item, i) => (
-              <div key={i} className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300">
+              <div 
+                key={i} 
+                className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300 cursor-pointer"
+                onClick={() => setSelectedImage(item)}
+              >
                 <img src={item.src} alt={item.title} className="w-full h-48 sm:h-64 object-cover" />
                 <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
@@ -575,6 +583,34 @@ function App() {
               </div>
             ))}
           </div>
+
+          {/* Модальное окно для просмотра изображения */}
+          {selectedImage && (
+            <div 
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+              onClick={() => setSelectedImage(null)}
+            >
+              <button 
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                onClick={() => setSelectedImage(null)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div className="max-w-7xl max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+                <img 
+                  src={selectedImage.src} 
+                  alt={selectedImage.title}
+                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                />
+                <div className="mt-4 text-center">
+                  <p className="text-white font-['Orbitron'] text-lg">{selectedImage.title}</p>
+                  <p className="text-gray-300 text-sm mt-1">{selectedImage.subtitle}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
