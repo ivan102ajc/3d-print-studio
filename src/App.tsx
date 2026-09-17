@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 
 type Theme = 'dark' | 'light';
 
@@ -442,7 +442,7 @@ function App() {
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наше оборудование" subtitle="6 принтеров для любых задач" isDark={isDark} />
           <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10">
-            <img src={equipmentImage} alt="Наше оборудование" className="w-full h-48 sm:h-64 object-cover" />
+            <img src={equipmentImage} alt="Наше оборудование" loading="lazy" decoding="async" className="w-full h-48 sm:h-64 object-cover" />
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
             {printers.map((printer, i) => (
@@ -576,12 +576,13 @@ function App() {
                 className={`relative group rounded-2xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]'} hover:border-cyan-500/30 transition-all duration-300`}
               >
                 <div className="w-full h-80 sm:h-96 flex items-center justify-center">
-                  <img 
-                    src={item.src} 
-                    alt={item.title} 
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
+                <img 
+                  src={item.src} 
+                  alt={item.title} 
+                  loading="lazy"
+                  decoding="async"
+                  className="max-w-full max-h-full object-contain"
+                />                </div>
                 <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                     <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
@@ -760,7 +761,16 @@ function App() {
                 <p className={`${textMuted} text-xs sm:text-sm mt-1`}>г. Люберцы, пр. Гагарина, д. 21</p>
               </div>
               <div className="relative h-64 sm:h-80 bg-[#0d1b2a]">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2235.5!2d37.8964!3d55.6764!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x46b54bfa2d82c5e1%3A0x4c8e2e1e7c5e6d0a!2z0L_RgNC-0YHQv9C10LrQvtC90YwsINCf0L7RgNC-0YHQvywg0JzQvtGB0LrQvtCy0YHQutCw0Y8gMjE!5e0!3m2!1sru!2sru!4v1" width="100%" height="100%" style={{ border: 0, filter: isDark ? 'invert(90%) hue-rotate(180deg) brightness(0.8) contrast(1.2)' : 'none' }} allowFullScreen loading="lazy" title="Карта" />
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2235.5!2d37.8964!3d55.6764!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x46b54bfa2d82c5e1%3A0x4c8e2e1e7c5e6d0a!2z0L_RgNC-0YHQv9C10LrQvtC90YwsINCf0L7RgNC-0YHQvywg0JzQvtGB0LrQvtCy0YHQutCw0Y8gMjE!5e0!3m2!1sru!2sru!4v1" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0, filter: isDark ? 'invert(90%) hue-rotate(180deg) brightness(0.8) contrast(1.2)' : 'none' }} 
+                  allowFullScreen 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Карта" 
+                />
               </div>
             </div>
           </div>
@@ -786,7 +796,7 @@ function App() {
   );
 }
 
-function SectionTitle({ title, subtitle, isDark }: { title: string; subtitle: string; isDark: boolean }) {
+const SectionTitle = memo(({ title, subtitle, isDark }: { title: string; subtitle: string; isDark: boolean }) => {
   return (
     <div className="text-center px-2">
       <h2 className="font-['Orbitron'] text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">{title}</h2>
@@ -794,6 +804,6 @@ function SectionTitle({ title, subtitle, isDark }: { title: string; subtitle: st
       <div className="mt-4 mx-auto w-20 sm:w-24 h-1 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500" />
     </div>
   );
-}
+});
 
 export default App;
