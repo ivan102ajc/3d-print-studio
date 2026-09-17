@@ -104,7 +104,7 @@ function App() {
 
   const [gallery] = useState<GalleryItem[]>(defaultGallery);
   const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
-  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+
 
   useEffect(() => {
     localStorage.setItem('protolab-theme', theme);
@@ -116,7 +116,7 @@ function App() {
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      const sections = ['hero', 'about', 'services', 'printers', 'materials', 'calculator', 'gallery', 'makerworld', 'location', 'contact'];
+      const sections = ['hero', 'about', 'services', 'printers', 'materials', 'calculator', 'gallery', 'makerworld', 'makerlab', 'location', 'contact'];
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -184,6 +184,7 @@ function App() {
     { id: 'calculator', label: 'Калькулятор' },
     { id: 'gallery', label: 'Работы' },
     { id: 'makerworld', label: 'Каталог' },
+    { id: 'makerlab', label: 'MakerLab' },
     { id: 'location', label: 'Контакты' },
   ];
 
@@ -442,10 +443,7 @@ function App() {
       <section id="printers" className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <SectionTitle title="Наше оборудование" subtitle="6 принтеров для любых задач" isDark={isDark} />
-          <div 
-            className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10 cursor-pointer hover:border-cyan-500/30 transition-all duration-300"
-            onClick={() => setSelectedImage({ src: equipmentImage, title: 'Наше оборудование', subtitle: '6 принтеров для любых задач' })}
-          >
+          <div className="mt-10 sm:mt-12 relative rounded-2xl overflow-hidden border border-white/10">
             <img src={equipmentImage} alt="Наше оборудование" className="w-full h-48 sm:h-64 object-cover" />
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
@@ -570,11 +568,16 @@ function App() {
             {gallery.map((item, i) => (
               <div 
                 key={i} 
-                className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedImage(item)}
+                className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
               >
-                <img src={item.src} alt={item.title} className="w-full h-48 sm:h-64 object-cover" />
-                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}>
+                <div className="relative w-full h-48 sm:h-64 overflow-hidden">
+                  <img 
+                    src={item.src} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-150"
+                  />
+                </div>
+                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                     <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
                     <p className="text-gray-300 text-xs">{item.subtitle}</p>
@@ -583,34 +586,6 @@ function App() {
               </div>
             ))}
           </div>
-
-          {/* Модальное окно для просмотра изображения */}
-          {selectedImage && (
-            <div 
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
-              onClick={() => setSelectedImage(null)}
-            >
-              <button 
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-                onClick={() => setSelectedImage(null)}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <div className="max-w-7xl max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-                <img 
-                  src={selectedImage.src} 
-                  alt={selectedImage.title}
-                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
-                />
-                <div className="mt-4 text-center">
-                  <p className="text-white font-['Orbitron'] text-lg">{selectedImage.title}</p>
-                  <p className="text-gray-300 text-sm mt-1">{selectedImage.subtitle}</p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
@@ -656,6 +631,60 @@ function App() {
                     <a href={makerWorldUrl} target="_blank" rel="noopener noreferrer" className="text-orange-400 text-xs break-all hover:underline">{makerWorldUrl}</a>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* MakerLab */}
+      <section id="makerlab" className="relative z-10 py-16 sm:py-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <SectionTitle title="Сгенерировать 3D-модель" subtitle="Создайте модель по фотографии с помощью ИИ" isDark={isDark} />
+          <div className="mt-10 sm:mt-12 relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl opacity-20 blur" />
+            <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain}`}>
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 mb-4">
+                  <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>MakerLab</h3>
+                <p className={`${textMuted} text-sm`}>Превратите фотографию в 3D-модель с помощью искусственного интеллекта</p>
+              </div>
+              <div className="space-y-4">
+                <div className={`p-4 rounded-xl ${bgCardAlt}`}>
+                  <h4 className={`font-['Orbitron'] text-sm font-bold ${textPrimary} mb-3`}>Как это работает:</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-purple-400 font-bold">1.</span>
+                      <span className={textSecondary}>Загрузите фотографию объекта</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-purple-400 font-bold">2.</span>
+                      <span className={textSecondary}>ИИ анализирует изображение и создаёт 3D-модель</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-purple-400 font-bold">3.</span>
+                      <span className={textSecondary}>Скачайте готовую модель для печати</span>
+                    </div>
+                  </div>
+                </div>
+                <a 
+                  href="https://makerworld.com/ru/makerlab?from=navbar" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-400 hover:to-pink-500 transition-all duration-300 shadow-lg shadow-purple-500/25 text-sm"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Открыть MakerLab
+                </a>
+                <p className={`${textMutedLight} text-xs text-center`}>
+                  💡 Бесплатный инструмент от MakerWorld для создания 3D-моделей из фотографий
+                </p>
               </div>
             </div>
           </div>
