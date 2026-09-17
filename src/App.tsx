@@ -642,11 +642,11 @@ function App() {
 
             {/* MakerLab */}
             <div id="makerlab" className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl opacity-20 blur" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 blur" />
               <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain} h-full`}>
                 <div className="text-center mb-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 mb-4">
-                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 mb-4">
+                    <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -658,15 +658,15 @@ function App() {
                     <h4 className={`font-['Orbitron'] text-sm font-bold ${textPrimary} mb-3`}>Как это работает:</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-2">
-                        <span className="text-purple-400 font-bold">1.</span>
+                        <span className="text-green-400 font-bold">1.</span>
                         <span className={textSecondary}>Загрузите фотографию объекта</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <span className="text-purple-400 font-bold">2.</span>
+                        <span className="text-green-400 font-bold">2.</span>
                         <span className={textSecondary}>ИИ анализирует изображение и создаёт 3D-модель</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <span className="text-purple-400 font-bold">3.</span>
+                        <span className="text-green-400 font-bold">3.</span>
                         <span className={textSecondary}>Скачайте готовую модель для печати</span>
                       </div>
                     </div>
@@ -675,7 +675,7 @@ function App() {
                     href="https://makerworld.com/ru/makerlab?from=navbar" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-400 hover:to-pink-500 transition-all duration-300 shadow-lg shadow-purple-500/25 text-sm"
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold hover:from-green-400 hover:to-emerald-500 transition-all duration-300 shadow-lg shadow-green-500/25 text-sm"
                   >
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
