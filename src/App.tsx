@@ -183,7 +183,6 @@ function App() {
     { id: 'calculator', label: 'Калькулятор' },
     { id: 'gallery', label: 'Работы' },
     { id: 'makerworld', label: 'Каталог' },
-    { id: 'makerlab', label: 'MakerLab' },
     { id: 'location', label: 'Контакты' },
   ];
 
