@@ -104,6 +104,7 @@ function App() {
 
   const [gallery] = useState<GalleryItem[]>(defaultGallery);
   const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
+  const [hoveredImage, setHoveredImage] = useState<GalleryItem | null>(null);
 
 
   useEffect(() => {
@@ -569,14 +570,14 @@ function App() {
               <div 
                 key={i} 
                 className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
+                onMouseEnter={() => setHoveredImage(item)}
+                onMouseLeave={() => setHoveredImage(null)}
               >
-                <div className="relative w-full h-48 sm:h-64 overflow-hidden">
-                  <img 
-                    src={item.src} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-150"
-                  />
-                </div>
+                <img 
+                  src={item.src} 
+                  alt={item.title} 
+                  className="w-full h-48 sm:h-64 object-cover"
+                />
                 <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                     <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
@@ -586,6 +587,25 @@ function App() {
               </div>
             ))}
           </div>
+
+          {/* Модальное окно для просмотра изображения при наведении */}
+          {hoveredImage && (
+            <div 
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm pointer-events-none"
+            >
+              <div className="max-w-7xl max-h-[90vh] flex flex-col items-center">
+                <img 
+                  src={hoveredImage.src} 
+                  alt={hoveredImage.title}
+                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                />
+                <div className="mt-4 text-center">
+                  <p className="text-white font-['Orbitron'] text-lg">{hoveredImage.title}</p>
+                  <p className="text-gray-300 text-sm mt-1">{hoveredImage.subtitle}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
