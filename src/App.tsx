@@ -572,7 +572,7 @@ function App() {
                 <img 
                   src={item.src} 
                   alt={item.title} 
-                  className="w-full h-64 sm:h-80 object-cover"
+                  className="w-full h-80 sm:h-96 object-cover"
                 />
                 <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
