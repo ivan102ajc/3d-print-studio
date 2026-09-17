@@ -508,7 +508,14 @@ function App() {
                 <div>
                   <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Вес (грамм)</label>
                   <input type="range" min="5" max="1000" value={calcWeight} onChange={(e) => setCalcWeight(Number(e.target.value))} className="w-full accent-cyan-500" />
-                  <div className="text-cyan-500 font-['Orbitron'] text-base sm:text-lg mt-1">{calcWeight} г</div>
+                  <input 
+                    type="number" 
+                    min="5" 
+                    max="1000" 
+                    value={calcWeight} 
+                    onChange={(e) => setCalcWeight(Math.max(5, Math.min(1000, Number(e.target.value))))} 
+                    className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2 ${textPrimary} focus:outline-none transition-colors text-sm font-['Orbitron'] text-cyan-500 mt-1`}
+                  />
                 </div>
                 <div className="sm:col-span-2">
                   <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Сложность</label>
