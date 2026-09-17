@@ -104,7 +104,6 @@ function App() {
 
   const [gallery] = useState<GalleryItem[]>(defaultGallery);
   const [makerWorldUrl, setMakerWorldUrl] = useState<string>('');
-  const [hoveredImage, setHoveredImage] = useState<GalleryItem | null>(null);
 
 
   useEffect(() => {
@@ -117,7 +116,7 @@ function App() {
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      const sections = ['hero', 'about', 'services', 'printers', 'materials', 'calculator', 'gallery', 'makerworld', 'makerlab', 'location', 'contact'];
+      const sections = ['hero', 'about', 'services', 'printers', 'materials', 'calculator', 'gallery', 'makerworld', 'location', 'contact'];
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -569,16 +568,16 @@ function App() {
             {gallery.map((item, i) => (
               <div 
                 key={i} 
-                className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
-                onMouseEnter={() => setHoveredImage(item)}
-                onMouseLeave={() => setHoveredImage(null)}
+                className="relative group rounded-2xl overflow-visible border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
               >
-                <img 
-                  src={item.src} 
-                  alt={item.title} 
-                  className="w-full h-48 sm:h-64 object-cover"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}>
+                <div className="overflow-hidden rounded-2xl transition-all duration-300 group-hover:py-4">
+                  <img 
+                    src={item.src} 
+                    alt={item.title} 
+                    className="w-full h-48 sm:h-64 object-cover transition-all duration-300"
+                  />
+                </div>
+                <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                     <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
                     <p className="text-gray-300 text-xs">{item.subtitle}</p>
@@ -587,124 +586,103 @@ function App() {
               </div>
             ))}
           </div>
-
-          {/* Модальное окно для просмотра изображения при наведении */}
-          {hoveredImage && (
-            <div 
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm pointer-events-none"
-            >
-              <div className="max-w-7xl max-h-[90vh] flex flex-col items-center">
-                <img 
-                  src={hoveredImage.src} 
-                  alt={hoveredImage.title}
-                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
-                />
-                <div className="mt-4 text-center">
-                  <p className="text-white font-['Orbitron'] text-lg">{hoveredImage.title}</p>
-                  <p className="text-gray-300 text-sm mt-1">{hoveredImage.subtitle}</p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* MakerWorld */}
+      {/* MakerWorld & MakerLab */}
       <section id="makerworld" className="relative z-10 py-16 sm:py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <SectionTitle title="Каталог моделей" subtitle="Выберите готовую 3D-модель для печати" isDark={isDark} />
-          <div className="mt-10 sm:mt-12 relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 blur" />
-            <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain}`}>
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 mb-4">
-                  <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        <div className="max-w-7xl mx-auto">
+          <SectionTitle title="Инструменты MakerWorld" subtitle="Каталог моделей и генерация 3D из фото" isDark={isDark} />
+          <div className="mt-10 sm:mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* MakerWorld */}
+            <div id="makerworld-card" className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 blur" />
+              <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain} h-full`}>
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 mb-4">
+                    <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </div>
+                  <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>Каталог моделей</h3>
+                  <p className={`${textMuted} text-sm`}>Большая библиотека готовых 3D-моделей</p>
                 </div>
-                <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>MakerWorld</h3>
-                <p className={`${textMuted} text-sm`}>Большая библиотека готовых 3D-моделей</p>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Ссылка на модель</label>
-                  <input type="url" placeholder="https://makerworld.com/ru/models/..." className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:outline-none transition-colors text-sm`}
-                    onChange={(e) => {
-                      const url = e.target.value.trim();
-                      setMakerWorldUrl(url.includes('makerworld.com') ? url : '');
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <a href="https://makerworld.com/ru" target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:from-orange-400 hover:to-red-500 transition-all duration-300 shadow-lg shadow-orange-500/25 text-sm">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                    Открыть каталог
-                  </a>
-                  {makerWorldUrl && (
-                    <a href={`https://t.me/ivanchay0937?text=${encodeURIComponent(`Хочу напечатать эту модель: ${makerWorldUrl}`)}`} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-cyan-500/25 text-sm">
-                      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-                      Обсудить печать
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-xs sm:text-sm ${textMuted} mb-2 font-['Orbitron']`}>Ссылка на модель</label>
+                    <input type="url" placeholder="https://makerworld.com/ru/models/..." className={`w-full ${inputBg} border ${inputBorder} rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${textPrimary} focus:outline-none transition-colors text-sm`}
+                      onChange={(e) => {
+                        const url = e.target.value.trim();
+                        setMakerWorldUrl(url.includes('makerworld.com') ? url : '');
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <a href="https://makerworld.com/ru" target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:from-orange-400 hover:to-red-500 transition-all duration-300 shadow-lg shadow-orange-500/25 text-sm">
+                      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                      Открыть каталог
                     </a>
+                    {makerWorldUrl && (
+                      <a href={`https://t.me/ivanchay0937?text=${encodeURIComponent(`Хочу напечатать эту модель: ${makerWorldUrl}`)}`} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-cyan-500/25 text-sm">
+                        <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                        Обсудить печать
+                      </a>
+                    )}
+                  </div>
+                  {makerWorldUrl && (
+                    <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                      <p className={`${textPrimary} text-sm font-medium mb-1`}>Выбранная модель:</p>
+                      <a href={makerWorldUrl} target="_blank" rel="noopener noreferrer" className="text-orange-400 text-xs break-all hover:underline">{makerWorldUrl}</a>
+                    </div>
                   )}
                 </div>
-                {makerWorldUrl && (
-                  <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                    <p className={`${textPrimary} text-sm font-medium mb-1`}>Выбранная модель:</p>
-                    <a href={makerWorldUrl} target="_blank" rel="noopener noreferrer" className="text-orange-400 text-xs break-all hover:underline">{makerWorldUrl}</a>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* MakerLab */}
-      <section id="makerlab" className="relative z-10 py-16 sm:py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <SectionTitle title="Сгенерировать 3D-модель" subtitle="Создайте модель по фотографии с помощью ИИ" isDark={isDark} />
-          <div className="mt-10 sm:mt-12 relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl opacity-20 blur" />
-            <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain}`}>
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 mb-4">
-                  <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+            {/* MakerLab */}
+            <div id="makerlab" className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl opacity-20 blur" />
+              <div className={`relative ${bgCard} rounded-2xl p-5 sm:p-8 border ${borderMain} h-full`}>
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 mb-4">
+                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>Сгенерировать 3D-модель</h3>
+                  <p className={`${textMuted} text-sm`}>Превратите фотографию в 3D-модель с помощью ИИ</p>
                 </div>
-                <h3 className={`font-['Orbitron'] text-lg sm:text-xl font-bold ${textPrimary} mb-2`}>MakerLab</h3>
-                <p className={`${textMuted} text-sm`}>Превратите фотографию в 3D-модель с помощью искусственного интеллекта</p>
-              </div>
-              <div className="space-y-4">
-                <div className={`p-4 rounded-xl ${bgCardAlt}`}>
-                  <h4 className={`font-['Orbitron'] text-sm font-bold ${textPrimary} mb-3`}>Как это работает:</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="text-purple-400 font-bold">1.</span>
-                      <span className={textSecondary}>Загрузите фотографию объекта</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-purple-400 font-bold">2.</span>
-                      <span className={textSecondary}>ИИ анализирует изображение и создаёт 3D-модель</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-purple-400 font-bold">3.</span>
-                      <span className={textSecondary}>Скачайте готовую модель для печати</span>
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl ${bgCardAlt}`}>
+                    <h4 className={`font-['Orbitron'] text-sm font-bold ${textPrimary} mb-3`}>Как это работает:</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <span className="text-purple-400 font-bold">1.</span>
+                        <span className={textSecondary}>Загрузите фотографию объекта</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-purple-400 font-bold">2.</span>
+                        <span className={textSecondary}>ИИ анализирует изображение и создаёт 3D-модель</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-purple-400 font-bold">3.</span>
+                        <span className={textSecondary}>Скачайте готовую модель для печати</span>
+                      </div>
                     </div>
                   </div>
+                  <a 
+                    href="https://makerworld.com/ru/makerlab?from=navbar" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-400 hover:to-pink-500 transition-all duration-300 shadow-lg shadow-purple-500/25 text-sm"
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Открыть MakerLab
+                  </a>
+                  <p className={`${textMutedLight} text-xs text-center`}>
+                    💡 Бесплатный инструмент от MakerWorld для создания 3D-моделей из фотографий
+                  </p>
                 </div>
-                <a 
-                  href="https://makerworld.com/ru/makerlab?from=navbar" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-400 hover:to-pink-500 transition-all duration-300 shadow-lg shadow-purple-500/25 text-sm"
-                >
-                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Открыть MakerLab
-                </a>
-                <p className={`${textMutedLight} text-xs text-center`}>
-                  💡 Бесплатный инструмент от MakerWorld для создания 3D-моделей из фотографий
-                </p>
               </div>
             </div>
           </div>
