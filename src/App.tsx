@@ -569,11 +569,13 @@ function App() {
                 key={i} 
                 className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
               >
-                <img 
-                  src={item.src} 
-                  alt={item.title} 
-                  className="w-full h-80 sm:h-96 object-cover"
-                />
+                <div className="w-full h-80 sm:h-96 flex items-center justify-center bg-black/20">
+                  <img 
+                    src={item.src} 
+                    alt={item.title} 
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
                 <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a]' : 'from-black/80'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl`}>
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                     <p className="text-white font-['Orbitron'] text-xs sm:text-sm">{item.title}</p>
