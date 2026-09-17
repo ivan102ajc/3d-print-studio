@@ -569,7 +569,7 @@ function App() {
                 key={i} 
                 className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
               >
-                <div className="w-full h-80 sm:h-96 flex items-center justify-center bg-black/20">
+                <div className="w-full h-80 sm:h-96 flex items-center justify-center">
                   <img 
                     src={item.src} 
                     alt={item.title} 
