@@ -567,7 +567,7 @@ function App() {
             {gallery.map((item, i) => (
               <div 
                 key={i} 
-                className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
+                className={`relative group rounded-2xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-gray-300'} hover:border-cyan-500/30 transition-all duration-300`}
               >
                 <div className="w-full h-80 sm:h-96 flex items-center justify-center">
                   <img 
