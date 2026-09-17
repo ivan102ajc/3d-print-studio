@@ -762,14 +762,14 @@ function App() {
               </div>
               <div className="relative h-64 sm:h-80 bg-[#0d1b2a]">
                 <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2235.5!2d37.8964!3d55.6764!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x46b54bfa2d82c5e1%3A0x4c8e2e1e7c5e6d0a!2z0L_RgNC-0YHQv9C10LrQvtC90YwsINCf0L7RgNC-0YHQvywg0JzQvtGB0LrQvtCy0YHQutCw0Y8gMjE!5e0!3m2!1sru!2sru!4v1" 
+                  src="https://maps.google.com/maps?q=55.691567,37.911851&z=17&output=embed" 
                   width="100%" 
                   height="100%" 
                   style={{ border: 0, filter: isDark ? 'invert(90%) hue-rotate(180deg) brightness(0.8) contrast(1.2)' : 'none' }} 
                   allowFullScreen 
                   loading="lazy" 
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Карта" 
+                  title="Карта — Люберцы, пр. Гагарина, 21" 
                 />
               </div>
             </div>
