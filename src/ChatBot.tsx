@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { knowledgeBase } from './knowledgeBase';
+import { queryDeepSeek, isValidApiKey } from './deepseek';
 
 type Message = {
   role: 'user' | 'bot';
@@ -22,6 +23,11 @@ export default function ChatBot({ isDark }: Props) {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [apiKey, setApiKey] = useState<string>(() => {
+    return localStorage.getItem('deepseek_api_key') || '';
+  });
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +35,7 @@ export default function ChatBot({ isDark }: Props) {
   const bgCardAlt = isDark ? 'bg-[#0d1b2a]' : 'bg-gray-50';
   const textPrimary = isDark ? 'text-white' : 'text-gray-900';
   const textSecondary = isDark ? 'text-gray-300' : 'text-gray-700';
+  const textMuted = isDark ? 'text-gray-400' : 'text-gray-500';
   const borderMain = isDark ? 'border-white/10' : 'border-gray-200';
 
   useEffect(() => {
@@ -91,17 +98,11 @@ export default function ChatBot({ isDark }: Props) {
       return randomMatch.answer;
     }
     
-    // Если ничего не найдено - разнообразные ответы
-    const fallbackResponses = [
-      'Интересный вопрос! 🤔 Я специализируюсь на 3D-печати. Могу рассказать о:\n\n• Материалах (PLA, PETG, ABS, TPU, нейлон, карбон)\n• Технологиях печати\n• Ценах и сроках\n• Оборудовании\n• Постобработке\n\nУточните вопрос — отвечу подробнее! 💡',
-      'Хм, не совсем понял вопрос 😕 Попробуйте спросить о:\n\n🔹 Материалах для печати\n🔹 Стоимости заказа\n🔹 Сроках изготовления\n🔹 Технологиях 3D-печати\n🔹 Оборудовании\n\nИли напишите в Telegram @ivanchay0937 — там отвечу на любой вопрос!',
-      'Это вне моей текущей базы знаний 😄 Но я эксперт по 3D-печати! Спросите о:\n\n• PLA, PETG, ABS, TPU, нейлоне, карбоне\n• Ценах и скидках\n• Принтерах Bambu Lab, Creality, Z-Bolt\n• Сроках выполнения\n• Постобработке\n\nЧто именно интересует? 🚀',
-    ];
-    
-    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    // Если ничего не найдено - возвращаем специальный маркер для DeepSeek
+    return 'Я эксперт по 3D-печати и могу помочь с вопросами о материалах, ценах, сроках и технологиях. Уточните ваш вопрос, пожалуйста!';
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
 
@@ -110,11 +111,64 @@ export default function ChatBot({ isDark }: Props) {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const answer = findAnswer(text);
+    try {
+      // Сначала пытаемся найти ответ в базе знаний
+      let answer = findAnswer(text);
+      
+      // Если ответ из fallback и есть API ключ - используем DeepSeek
+      if (answer.includes('Уточните ваш вопрос') && apiKey) {
+        try {
+          // Собираем историю разговора для контекста
+          const conversationHistory = messages
+            .slice(-10) // Последние 10 сообщений для контекста
+            .map(msg => ({
+              role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+              content: msg.text
+            }));
+          
+          answer = await queryDeepSeek(apiKey, text, conversationHistory);
+        } catch (error) {
+          console.error('DeepSeek error:', error);
+          // Если ошибка API - используем ответ из базы знаний
+        }
+      }
+      
       setMessages(prev => [...prev, { role: 'bot', text: answer, timestamp: Date.now() }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { 
+        role: 'bot', 
+        text: 'Извините, произошла ошибка при обработке запроса. Попробуйте ещё раз или обратитесь к нам напрямую в Telegram @ivanchay0937', 
+        timestamp: Date.now() 
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 500 + Math.random() * 800);
+    }
+  };
+
+  const handleSaveApiKey = () => {
+    if (isValidApiKey(tempApiKey)) {
+      setApiKey(tempApiKey);
+      localStorage.setItem('deepseek_api_key', tempApiKey);
+      setShowApiKeyInput(false);
+      setTempApiKey('');
+      setMessages(prev => [...prev, { 
+        role: 'bot', 
+        text: '✅ API ключ DeepSeek успешно сохранён! Теперь я могу отвечать на более сложные вопросы с помощью искусственного интеллекта.', 
+        timestamp: Date.now() 
+      }]);
+    } else {
+      alert('Неверный формат API ключа. Ключ должен начинаться с "sk-" и быть длиннее 20 символов.');
+    }
+  };
+
+  const handleRemoveApiKey = () => {
+    setApiKey('');
+    localStorage.removeItem('deepseek_api_key');
+    setMessages(prev => [...prev, { 
+      role: 'bot', 
+      text: 'API ключ удалён. Теперь я буду отвечать только на основе базы знаний.', 
+      timestamp: Date.now() 
+    }]);
   };
 
   const quickQuestions = [
@@ -148,11 +202,90 @@ export default function ChatBot({ isDark }: Props) {
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <span className="text-xl">🤖</span>
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="text-white font-['Orbitron'] text-sm font-bold">AI-ассистент</h3>
-              <p className="text-white/70 text-xs">Эксперт по 3D-печати</p>
+              <p className="text-white/70 text-xs">
+                {apiKey ? '✨ DeepSeek активен' : 'Эксперт по 3D-печати'}
+              </p>
             </div>
+            <button
+              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+              className="text-white/70 hover:text-white transition-colors"
+              title="Настройки API"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
+
+          {/* API Key Input Modal */}
+          {showApiKeyInput && (
+            <div className={`${bgCardAlt} border-b ${borderMain} p-4 space-y-3`}>
+              <div className="flex items-center justify-between">
+                <h4 className={`font-['Orbitron'] text-sm font-bold ${textPrimary}`}>
+                  🔑 DeepSeek API
+                </h4>
+                <button
+                  onClick={() => setShowApiKeyInput(false)}
+                  className={`${textMuted} hover:text-red-500 transition-colors`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {apiKey ? (
+                <div className="space-y-2">
+                  <p className={`text-xs ${textSecondary}`}>
+                    ✅ API ключ активен
+                  </p>
+                  <p className={`text-xs ${textMuted}`}>
+                    Ключ: {apiKey.substring(0, 10)}...{apiKey.substring(apiKey.length - 4)}
+                  </p>
+                  <button
+                    onClick={handleRemoveApiKey}
+                    className="w-full py-2 px-4 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium transition-colors"
+                  >
+                    Удалить API ключ
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className={`text-xs ${textSecondary}`}>
+                    Получите API ключ на{' '}
+                    <a 
+                      href="https://platform.deepseek.com/api_keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-cyan-400 hover:underline"
+                    >
+                      platform.deepseek.com
+                    </a>
+                  </p>
+                  <input
+                    type="password"
+                    value={tempApiKey}
+                    onChange={(e) => setTempApiKey(e.target.value)}
+                    placeholder="sk-..."
+                    className={`w-full px-3 py-2 rounded-lg ${bgCard} border ${borderMain} ${textPrimary} text-sm focus:outline-none focus:border-cyan-500/50 transition-colors`}
+                  />
+                  <button
+                    onClick={handleSaveApiKey}
+                    disabled={!tempApiKey}
+                    className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium hover:from-cyan-400 hover:to-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Сохранить API ключ
+                  </button>
+                  <p className={`text-xs ${textMuted}`}>
+                    🔒 Ключ хранится только в вашем браузере
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className={`flex-1 overflow-y-auto p-4 space-y-3 ${isDark ? 'bg-[#0a0a1a]' : 'bg-gray-50'}`}>
             {messages.map((msg, i) => (
