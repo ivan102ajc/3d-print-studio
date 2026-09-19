@@ -1,5 +1,4 @@
 import { useState, useEffect, memo } from 'react';
-import ChatWidget from './components/ai-chat/ChatWidget';
 
 type Theme = 'dark' | 'light';
 
@@ -431,9 +430,6 @@ function App() {
           <p className={`${textMuted} text-sm`}>© 2024 ProtoLab 3D. Люберцы, пр. Гагарина, 21</p>
         </div>
       </footer>
-
-      {/* AI Консультант */}
-      <ChatWidget isDark={isDark} />
     </div>
   );
 }
