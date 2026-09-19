@@ -1,4 +1,4 @@
-// DeepSeek API интеграция
+// DeepSeek API интеграция с RAG-поиском
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
@@ -7,70 +7,241 @@ export interface DeepSeekMessage {
   content: string;
 }
 
-// Системный промпт с информацией о ProtoLab 3D
-const SYSTEM_PROMPT = `Ты - AI-ассистент компании ProtoLab 3D, которая специализируется на 3D-печати в Люберцах.
+export interface SearchResult {
+  source: string;
+  content: string;
+  score: number;
+}
 
-О КОМПАНИИ:
-- Адрес: г. Люберцы, проспект Гагарина, дом 21
-- Telegram: @ivanchay0937
-- Канал: @protolab_3d_pechat
-- 6 принтеров: Bambu Lab P1S, Creality K1 Max, Flying Bear Ghost 4, Bambu Lab H2S, Bambu Lab A1 Combo, Z-Bolt S300 HT
+// Системный промпт (встроенная версия system_prompt.md)
+const SYSTEM_PROMPT = `Ты — AI-ассистент студии 3D-печати ProtoLab 3D в г. Люберцы.
+
+РОЛЬ: Консультировать клиентов по 3D-печати, помогать выбирать материалы, рассчитывать стоимость, принимать заявки.
+
+ЖЁСТКИЕ ПРАВИЛА:
+- Отвечай ТОЛЬКО на основе предоставленного контекста из базы знаний.
+- НЕ выдумывай цены, сроки, материалы, характеристики.
+- Если данных нет — скажи: «Уточню у специалиста. Оставьте контакт — менеджер свяжется в течение часа».
+- Не давай юридических/медицинских гарантий.
+- Не обсуждай конкурентов и темы вне 3D-печати.
+
+СТИЛЬ:
+- Язык: русский.
+- Обращение: «вы» (вежливое).
+- Длина: 2–6 предложений.
+- В конце — 1 уточняющий вопрос.
+- Максимум 1–2 эмодзи.
+
+ФОРМУЛЫ РАСЧЁТА:
+цена = вес_г × цена_за_грамм + постобработка + срочность
+вес = объём_см³ × плотность_г/см³ × коэффициент_заполнения
+
+Плотности: PLA 1.24, PETG 1.27, ABS 1.04, TPU 1.21, Нейлон 1.14, Карбон 1.30 г/см³
+
+Скидки: 10-19 шт -5%, 20-49 шт -10%, 50+ шт -15%
+Срочность: +50%
 
 ЦЕНЫ:
-- PLA/PETG/ABS: от 8₽/грамм
-- TPU: от 15₽/грамм
-- Нейлон: от 25₽/грамм
-- Карбон: от 30₽/грамм
+- PLA/PETG/ABS: 8₽/г
+- TPU: 15₽/г
+- Нейлон: 25₽/г
+- Карбон: 30₽/г
 - 3D-моделирование: 500₽/час
-- 3D-сканирование: по запросу
 
-СКИДКИ:
-- От 10 штук: 5%
-- От 20 штук: 10%
-- От 50 штук: 15%
+КОНТАКТЫ:
+- Telegram: @ivanchay0937
+- Max: через ссылку на сайте
+- Адрес: г. Люберцы, пр. Гагарина, 21
 
-СРОКИ:
-- Простые детали: 1-2 дня
-- Средние проекты: 3-5 дней
-- Сложные: 5-14 дней
-- Срочные заказы: от нескольких часов (+50%)
+SELF-CHECK перед ответом:
+✓ Факты из базы?
+✓ Нет выдумок?
+✓ Есть вопрос в конце?
+✓ Не более 6 предложений?
+✓ Не более 2 эмодзи?`;
 
-МАТЕРИАЛЫ:
-- PLA: биоразлагаемый, для прототипов и декора, до 60°C
-- PETG: прочный, химостойкий, пищевой допуск, до 80°C
-- ABS: термостойкий до 100°C, ударопрочный
-- TPU: гибкий, эластичный, как резина
-- Нейлон: инженерный, износостойкий, до 150°C
-- Карбон: максимальная прочность, лёгкий
+// Загрузка базы знаний
+let knowledgeBaseCache: any = null;
+let faqCache: any[] | null = null;
 
-ТЕХНОЛОГИЯ:
-- FDM (послойное наплавление)
-- Точность: ±0.2 мм (стандарт), ±0.1 мм (высокая)
-- Высота слоя: 0.12-0.3 мм
-- Максимальный размер: 300×300×400 мм (Z-Bolt S300 HT)
+async function loadKnowledgeBase() {
+  if (!knowledgeBaseCache) {
+    const response = await fetch('/knowledge_base.json');
+    knowledgeBaseCache = await response.json();
+  }
+  return knowledgeBaseCache;
+}
 
-УСЛУГИ:
-- 3D-печать
-- 3D-моделирование
-- 3D-сканирование
-- Постобработка (шлифовка, покраска)
+async function loadFaq() {
+  if (!faqCache) {
+    const response = await fetch('/faq.json');
+    faqCache = await response.json();
+  }
+  return faqCache;
+}
 
-ДОСТАВКА:
-- По всей России (Почта, СДЭК, Boxberry)
-- Самовывоз из Люберец
+// Простой keyword-поиск по базе знаний
+function searchKnowledgeBase(query: string, data: any): SearchResult[] {
+  const results: SearchResult[] = [];
+  const normalizedQuery = query.toLowerCase();
+  const words = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
 
-Отвечай дружелюбно, используй эмодзи. Если вопрос не связан с 3D-печатью или услугами компании, вежливо переведи разговор на тему 3D-печати.`;
+  // Поиск по материалам
+  if (data.materials) {
+    for (const material of data.materials) {
+      let score = 0;
+      const text = `${material.name} ${material.description || ''} ${material.applications?.join(' ') || ''}`.toLowerCase();
+      
+      for (const word of words) {
+        if (text.includes(word)) score += 2;
+        if (material.name.toLowerCase().includes(word)) score += 5;
+      }
+      
+      if (score > 0) {
+        results.push({
+          source: `Материал: ${material.name}`,
+          content: `${material.name}: ${material.price_per_gram}₽/г. ${material.pros?.join(', ') || ''}. Применение: ${material.applications?.join(', ') || ''}.`,
+          score
+        });
+      }
+    }
+  }
 
+  // Поиск по услугам
+  if (data.services) {
+    for (const service of data.services) {
+      let score = 0;
+      const text = `${service.name} ${service.description || ''}`.toLowerCase();
+      
+      for (const word of words) {
+        if (text.includes(word)) score += 2;
+        if (service.name.toLowerCase().includes(word)) score += 5;
+      }
+      
+      if (score > 0) {
+        results.push({
+          source: `Услуга: ${service.name}`,
+          content: `${service.name}: ${service.price} за ${service.unit}. Минимальный заказ: ${service.min_order}. Сроки: ${service.lead_time}.`,
+          score
+        });
+      }
+    }
+  }
+
+  // Поиск по постобработке
+  if (data.postprocessing) {
+    for (const proc of data.postprocessing) {
+      let score = 0;
+      const text = proc.name.toLowerCase();
+      
+      for (const word of words) {
+        if (text.includes(word)) score += 3;
+      }
+      
+      if (score > 0) {
+        results.push({
+          source: `Постобработка: ${proc.name}`,
+          content: `${proc.name}: ${proc.price}. Сроки: ${proc.lead_time}.`,
+          score
+        });
+      }
+    }
+  }
+
+  return results.sort((a, b) => b.score - a.score).slice(0, 5);
+}
+
+// Поиск по FAQ
+function searchFaq(query: string, faq: any[] | null): SearchResult[] {
+  if (!faq) return [];
+  
+  const results: SearchResult[] = [];
+  const normalizedQuery = query.toLowerCase();
+  const words = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
+
+  for (const item of faq) {
+    let score = 0;
+    const questionLower = item.question.toLowerCase();
+    
+    // Точное совпадение вопроса
+    if (questionLower.includes(normalizedQuery) || normalizedQuery.includes(questionLower)) {
+      score += 20;
+    }
+    
+    // Совпадение по ключевым словам
+    for (const word of words) {
+      if (questionLower.includes(word)) score += 2;
+    }
+    
+    if (score > 0) {
+      results.push({
+        source: `FAQ: ${item.category}`,
+        content: `Вопрос: ${item.question}\nОтвет: ${item.answer}`,
+        score
+      });
+    }
+  }
+
+  return results.sort((a, b) => b.score - a.score).slice(0, 3);
+}
+
+// RAG-поиск: объединяет результаты из базы знаний и FAQ
+async function ragSearch(query: string): Promise<string> {
+  try {
+    const [knowledgeBase, faq] = await Promise.all([
+      loadKnowledgeBase(),
+      loadFaq()
+    ]);
+
+    const kbResults = searchKnowledgeBase(query, knowledgeBase);
+    const faqResults = searchFaq(query, faq);
+
+    const allResults = [...kbResults, ...faqResults]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    if (allResults.length === 0) {
+      return '';
+    }
+
+    let context = 'Контекст из базы знаний:\n\n';
+    for (const result of allResults) {
+      context += `[${result.source}]\n${result.content}\n\n`;
+    }
+
+    return context;
+  } catch (error) {
+    console.error('RAG search error:', error);
+    return '';
+  }
+}
+
+// Основной запрос к DeepSeek с RAG
 export async function queryDeepSeek(
   apiKey: string,
   userMessage: string,
   conversationHistory: DeepSeekMessage[] = []
 ): Promise<string> {
+  // RAG-поиск релевантного контекста
+  const ragContext = await ragSearch(userMessage);
+
   const messages: DeepSeekMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
-    ...conversationHistory,
-    { role: 'user', content: userMessage }
   ];
+
+  // Добавляем RAG-контекст, если есть
+  if (ragContext) {
+    messages.push({
+      role: 'system',
+      content: `Используй следующий контекст из базы знаний для ответа:\n\n${ragContext}`
+    });
+  }
+
+  // Добавляем историю разговора
+  messages.push(...conversationHistory);
+  
+  // Добавляем текущее сообщение
+  messages.push({ role: 'user', content: userMessage });
 
   try {
     const response = await fetch(DEEPSEEK_API_URL, {
@@ -82,8 +253,9 @@ export async function queryDeepSeek(
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: messages,
-        temperature: 0.7,
-        max_tokens: 1000
+        temperature: 0.3,
+        top_p: 0.9,
+        max_tokens: 500
       })
     });
 

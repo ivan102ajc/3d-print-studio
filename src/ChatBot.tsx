@@ -127,6 +127,13 @@ export default function ChatBot({ isDark }: Props) {
             }));
           
           answer = await queryDeepSeek(apiKey, text, conversationHistory);
+          
+          // Проверка: если DeepSeek не знает - предлагаем оставить заявку
+          if (answer.toLowerCase().includes('не знаю') || 
+              answer.toLowerCase().includes('нет информации') ||
+              answer.toLowerCase().includes('уточню у специалиста')) {
+            answer += '\n\n💡 Хотите, я передам ваш вопрос менеджеру? Оставьте контакт — свяжемся в течение часа!';
+          }
         } catch (error) {
           console.error('DeepSeek error:', error);
           // Если ошибка API - используем ответ из базы знаний
@@ -135,11 +142,22 @@ export default function ChatBot({ isDark }: Props) {
       
       setMessages(prev => [...prev, { role: 'bot', text: answer, timestamp: Date.now() }]);
     } catch (error) {
-      setMessages(prev => [...prev, { 
-        role: 'bot', 
-        text: 'Извините, произошла ошибка при обработке запроса. Попробуйте ещё раз или обратитесь к нам напрямую в Telegram @ivanchay0937', 
-        timestamp: Date.now() 
-      }]);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      
+      // Если ошибка API - предлагаем оставить заявку
+      if (errorMessage.includes('API') || errorMessage.includes('fetch')) {
+        setMessages(prev => [...prev, { 
+          role: 'bot', 
+          text: 'К сожалению, не удалось получить ответ от AI. 😕\n\nНо вы можете:\n• Написать напрямую в Telegram @ivanchay0937\n• Оставить заявку через форму на сайте\n• Позвонить по телефону\n\nМенеджер свяжется с вами в течение часа!', 
+          timestamp: Date.now() 
+        }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          role: 'bot', 
+          text: 'Извините, произошла ошибка при обработке запроса. Попробуйте ещё раз или обратитесь к нам напрямую в Telegram @ivanchay0937', 
+          timestamp: Date.now() 
+        }]);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -172,11 +190,48 @@ export default function ChatBot({ isDark }: Props) {
   };
 
   const quickQuestions = [
-    'Какой материал для шестерни?',
-    'Расскажи про PLA',
-    'Какой принтер лучше?',
-    'Сколько стоит печать?',
+    '💰 Рассчитать стоимость',
+    '🧪 Выбрать материал',
+    '⏱ Сроки',
+    '👨‍💼 Связаться с менеджером',
   ];
+
+  const handleQuickQuestion = (question: string) => {
+    // Обработка специальных кнопок
+    if (question.includes('Связаться с менеджером')) {
+      window.open('https://t.me/ivanchay0937', '_blank');
+      return;
+    }
+    
+    setMessages(prev => [...prev, { role: 'user', text: question, timestamp: Date.now() }]);
+    setIsTyping(true);
+    setTimeout(async () => {
+      try {
+        let answer = findAnswer(question);
+        
+        if (answer.includes('Уточните ваш вопрос') && apiKey) {
+          const conversationHistory = messages
+            .slice(-10)
+            .map(msg => ({
+              role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+              content: msg.text
+            }));
+          
+          answer = await queryDeepSeek(apiKey, question, conversationHistory);
+        }
+        
+        setMessages(prev => [...prev, { role: 'bot', text: answer, timestamp: Date.now() }]);
+      } catch (error) {
+        setMessages(prev => [...prev, { 
+          role: 'bot', 
+          text: 'Извините, произошла ошибка. Напишите нам в Telegram @ivanchay0937', 
+          timestamp: Date.now() 
+        }]);
+      } finally {
+        setIsTyping(false);
+      }
+    }, 500 + Math.random() * 800);
+  };
 
   return (
     <>
@@ -318,15 +373,8 @@ export default function ChatBot({ isDark }: Props) {
               {quickQuestions.map((q, i) => (
                 <button
                   key={i}
-                  onClick={() => {
-                    setMessages(prev => [...prev, { role: 'user', text: q, timestamp: Date.now() }]);
-                    setIsTyping(true);
-                    setTimeout(() => {
-                      setMessages(prev => [...prev, { role: 'bot', text: findAnswer(q), timestamp: Date.now() }]);
-                      setIsTyping(false);
-                    }, 500 + Math.random() * 800);
-                  }}
-                  className={`text-xs px-3 py-1.5 rounded-full border ${borderMain} text-gray-500 hover:text-cyan-400 hover:border-cyan-500/50 transition-colors`}
+                  onClick={() => handleQuickQuestion(q)}
+                  className={`text-xs px-3 py-1.5 rounded-full border ${borderMain} ${textMuted} hover:text-cyan-400 hover:border-cyan-500/50 transition-colors`}
                 >
                   {q}
                 </button>
