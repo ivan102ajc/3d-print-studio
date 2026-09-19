@@ -41,33 +41,64 @@ export default function ChatBot({ isDark }: Props) {
     }
   }, [isOpen]);
 
-  // Функция поиска ответа по ключевым словам
+  // Улучшенная функция поиска ответа
   const findAnswer = (input: string): string => {
     const normalizedInput = input.toLowerCase().trim();
     
-    // Поиск по ключевым словам
-    let bestMatch: { answer: string; score: number } | null = null;
+    // Массив всех подходящих ответов с их оценками
+    const matches: { answer: string; score: number; index: number }[] = [];
     
-    for (const entry of knowledgeBase) {
+    for (let i = 0; i < knowledgeBase.length; i++) {
+      const entry = knowledgeBase[i];
       let score = 0;
+      let matchedKeywords = 0;
       
+      // Проверяем каждое ключевое слово
       for (const keyword of entry.keywords) {
         if (normalizedInput.includes(keyword)) {
-          score += keyword.length;
+          // Более длинные совпадения важнее
+          score += keyword.length * 2;
+          matchedKeywords++;
+          
+          // Бонус за точное совпадение слова
+          const words = normalizedInput.split(/\s+/);
+          if (words.includes(keyword)) {
+            score += 5;
+          }
         }
       }
       
-      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
-        bestMatch = { answer: entry.answer, score };
+      // Бонус за множественные совпадения
+      if (matchedKeywords > 1) {
+        score *= 1.5;
+      }
+      
+      if (score > 0 && entry.answers.length > 0) {
+        // Выбираем случайный ответ из доступных
+        const randomAnswer = entry.answers[Math.floor(Math.random() * entry.answers.length)];
+        matches.push({ answer: randomAnswer, score, index: i });
       }
     }
     
-    if (bestMatch) {
-      return bestMatch.answer;
+    // Сортируем по оценке
+    matches.sort((a, b) => b.score - a.score);
+    
+    // Если есть совпадения
+    if (matches.length > 0) {
+      // Берём топ-3 ответа и выбираем случайно для разнообразия
+      const topMatches = matches.slice(0, Math.min(3, matches.length));
+      const randomMatch = topMatches[Math.floor(Math.random() * topMatches.length)];
+      return randomMatch.answer;
     }
     
-    // Если ничего не найдено
-    return 'Я эксперт по 3D-печати! 🤖 Могу рассказать о:\n\n• Технологиях и возможностях\n• Материалах (PLA, PETG, ABS, TPU, нейлон, карбон)\n• Принтерах (Bambu Lab, Creality, Z-Bolt)\n• Ценах и расчёте стоимости\n• Сроках и срочности\n• Постобработке и качестве\n• Файлах и подготовке\n• Доставке и логистике\n\nЗадайте конкретный вопрос — отвечу подробно! 💡';
+    // Если ничего не найдено - разнообразные ответы
+    const fallbackResponses = [
+      'Интересный вопрос! 🤔 Я специализируюсь на 3D-печати. Могу рассказать о:\n\n• Материалах (PLA, PETG, ABS, TPU, нейлон, карбон)\n• Технологиях печати\n• Ценах и сроках\n• Оборудовании\n• Постобработке\n\nУточните вопрос — отвечу подробнее! 💡',
+      'Хм, не совсем понял вопрос 😕 Попробуйте спросить о:\n\n🔹 Материалах для печати\n🔹 Стоимости заказа\n🔹 Сроках изготовления\n🔹 Технологиях 3D-печати\n🔹 Оборудовании\n\nИли напишите в Telegram @ivanchay0937 — там отвечу на любой вопрос!',
+      'Это вне моей текущей базы знаний 😄 Но я эксперт по 3D-печати! Спросите о:\n\n• PLA, PETG, ABS, TPU, нейлоне, карбоне\n• Ценах и скидках\n• Принтерах Bambu Lab, Creality, Z-Bolt\n• Сроках выполнения\n• Постобработке\n\nЧто именно интересует? 🚀',
+    ];
+    
+    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
   };
 
   const handleSend = () => {
