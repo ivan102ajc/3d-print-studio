@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { getTranslation, type Language } from './i18n';
 
 type Theme = 'dark' | 'light';
@@ -15,6 +15,8 @@ function App() {
   const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState('hero');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
   const [calcMaterial, setCalcMaterial] = useState('PLA');
   const [calcWeight, setCalcWeight] = useState(50);
   const [calcComplexity, setCalcComplexity] = useState(1);
@@ -46,12 +48,6 @@ function App() {
   }, [theme, lang]);
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  const toggleLang = () => {
-    const langs: Language[] = ['ru', 'en', 'zh'];
-    const currentIndex = langs.indexOf(lang);
-    const nextIndex = (currentIndex + 1) % langs.length;
-    setLang(langs[nextIndex]);
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,6 +67,20 @@ function App() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Закрытие dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+
+    if (langDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [langDropdownOpen]);
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -160,17 +170,86 @@ function App() {
                   {item.label}
                 </button>
               ))}
-              <button onClick={toggleLang} className={`ml-2 px-3 py-2 rounded-lg text-sm ${hoverBg}`} title={lang === 'ru' ? 'Русский' : lang === 'en' ? 'English' : '中文'}>
-                {lang === 'ru' ? 'RU' : lang === 'en' ? 'EN' : '中文'}
-              </button>
+              <div className="relative ml-2" ref={langDropdownRef}>
+                <button 
+                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                  className={`px-3 py-2 rounded-lg text-sm ${hoverBg} flex items-center gap-1`}
+                  title={lang === 'ru' ? 'Русский' : lang === 'en' ? 'English' : '中文'}
+                >
+                  {lang === 'ru' ? '🇷🇺 RU' : lang === 'en' ? '🇬🇧 EN' : '🇨🇳 中文'}
+                  <svg className={`w-4 h-4 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {langDropdownOpen && (
+                  <div className={`absolute right-0 mt-2 w-40 rounded-xl ${bgCard} border ${borderMain} shadow-lg overflow-hidden z-50`}>
+                    <button
+                      onClick={() => { setLang('ru'); setLangDropdownOpen(false); }}
+                      className={`w-full px-4 py-3 text-left text-sm ${hoverBg} flex items-center gap-2 ${lang === 'ru' ? 'text-cyan-500 bg-cyan-500/10' : textMuted}`}
+                    >
+                      <span>🇷🇺</span>
+                      <span>Русский</span>
+                    </button>
+                    <button
+                      onClick={() => { setLang('en'); setLangDropdownOpen(false); }}
+                      className={`w-full px-4 py-3 text-left text-sm ${hoverBg} flex items-center gap-2 ${lang === 'en' ? 'text-cyan-500 bg-cyan-500/10' : textMuted}`}
+                    >
+                      <span>🇬🇧</span>
+                      <span>English</span>
+                    </button>
+                    <button
+                      onClick={() => { setLang('zh'); setLangDropdownOpen(false); }}
+                      className={`w-full px-4 py-3 text-left text-sm ${hoverBg} flex items-center gap-2 ${lang === 'zh' ? 'text-cyan-500 bg-cyan-500/10' : textMuted}`}
+                    >
+                      <span>🇨🇳</span>
+                      <span>中文</span>
+                    </button>
+                  </div>
+                )}
+              </div>
               <button onClick={toggleTheme} className={`ml-2 p-2 rounded-lg ${hoverBg}`}>
                 {isDark ? t.theme.light : t.theme.dark}
               </button>
             </div>
             <div className="flex items-center gap-2 lg:hidden">
-              <button onClick={toggleLang} className={`px-2 py-1 rounded-lg text-xs ${hoverBg}`}>
-                {lang === 'ru' ? 'RU' : lang === 'en' ? 'EN' : '中文'}
-              </button>
+              <div className="relative" ref={langDropdownRef}>
+                <button 
+                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                  className={`px-2 py-1 rounded-lg text-xs ${hoverBg} flex items-center gap-1`}
+                >
+                  {lang === 'ru' ? '🇷🇺' : lang === 'en' ? '🇬🇧' : '🇨🇳'}
+                  <svg className={`w-3 h-3 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {langDropdownOpen && (
+                  <div className={`absolute right-0 mt-2 w-36 rounded-xl ${bgCard} border ${borderMain} shadow-lg overflow-hidden z-50`}>
+                    <button
+                      onClick={() => { setLang('ru'); setLangDropdownOpen(false); }}
+                      className={`w-full px-3 py-2 text-left text-sm ${hoverBg} flex items-center gap-2 ${lang === 'ru' ? 'text-cyan-500 bg-cyan-500/10' : textMuted}`}
+                    >
+                      <span>🇷🇺</span>
+                      <span>Русский</span>
+                    </button>
+                    <button
+                      onClick={() => { setLang('en'); setLangDropdownOpen(false); }}
+                      className={`w-full px-3 py-2 text-left text-sm ${hoverBg} flex items-center gap-2 ${lang === 'en' ? 'text-cyan-500 bg-cyan-500/10' : textMuted}`}
+                    >
+                      <span>🇬🇧</span>
+                      <span>English</span>
+                    </button>
+                    <button
+                      onClick={() => { setLang('zh'); setLangDropdownOpen(false); }}
+                      className={`w-full px-3 py-2 text-left text-sm ${hoverBg} flex items-center gap-2 ${lang === 'zh' ? 'text-cyan-500 bg-cyan-500/10' : textMuted}`}
+                    >
+                      <span>🇨🇳</span>
+                      <span>中文</span>
+                    </button>
+                  </div>
+                )}
+              </div>
               <button onClick={toggleTheme} className={`p-2 rounded-lg ${hoverBg}`}>{isDark ? t.theme.light : t.theme.dark}</button>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={textPrimary}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
