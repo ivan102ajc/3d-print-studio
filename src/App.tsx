@@ -1,4 +1,5 @@
 import { useState, useEffect, memo } from 'react';
+import ChatBot from './ChatBot';
 
 type Theme = 'dark' | 'light';
 
@@ -430,6 +431,9 @@ function App() {
           <p className={`${textMuted} text-sm`}>© 2024 ProtoLab 3D. Люберцы, пр. Гагарина, 21</p>
         </div>
       </footer>
+
+      {/* AI Чат-бот */}
+      <ChatBot isDark={isDark} />
     </div>
   );
 }
