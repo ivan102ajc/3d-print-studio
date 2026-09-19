@@ -50,7 +50,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   },
   // 3D-печать
   {
-    keywords: ['3d печать', '3д печать', 'трёхмерн', 'трехмерн', 'печать', 'напечатать', 'распечатать', 'печатаете', 'что печатаете'],
+    keywords: ['3d', '3д', 'печать', 'напечатать', 'распечатать', 'печатаете', 'печатать', 'печатаем', 'печати', 'принтер', 'принтеры', 'пластик', 'пластиков', 'изготовление', 'производство'],
     answers: [
       'Мы специализируемся на FDM-печати (послойное наплавление)! 🖨\n\nЭто универсальная технология для:\n• Прототипов и тестовых образцов\n• Функциональных деталей\n• Корпусов электроники\n• Запчастей и замен сломанных деталей\n• Декоративных изделий\n• Небольших серий (от 1 до 1000+ штук)\n\nУ нас 6 принтеров, что позволяет выполнять заказы параллельно и быстро!',
       '3D-печать — наша основная специализация! 🎯\n\nИспользуем технологию FDM — расплавленный пластик послойно создаёт объект. Это надёжно, точно и подходит для большинства задач.\n\nПечатаем из 6+ материалов: PLA, PETG, ABS, TPU, нейлон, карбон. Максимальный объём — 300×300×400 мм!',
@@ -66,7 +66,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   },
   // Материалы
   {
-    keywords: ['материал', 'пластик', 'филамент', 'какой пластик', 'материалы', 'из чего'],
+    keywords: ['материал', 'пластик', 'филамент', 'какой', 'материалы', 'из чего', 'материалах', 'материалам', 'материалом', 'пластика', 'пластике', 'пластики', 'пластиков', 'пластикам', 'пластиком'],
     answers: [
       'Работаем с 6+ материалами! 🧪\n\n🔵 PLA (8₽/г) — декор, прототипы, био-разлагаемый\n🟣 PETG (8₽/г) — прочность, универсальность, химстойкость\n🔴 ABS (8₽/г) — термостойкость до 100°C, ударопрочный\n🟡 TPU (15₽/г) — гибкий, эластичный, как резина\n🟢 PA12/PA6/PA66 (25₽/г) — инженерный, износостойкий\n🟠 Карбон (30₽/г) — максимальная жёсткость и лёгкость\n\nПомогу выбрать оптимальный материал под вашу задачу! 💡',
     ],
@@ -116,7 +116,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   },
   // Цены
   {
-    keywords: ['цена', 'стоимость', 'сколько стоит', 'прайс', 'расценк', 'рубл', 'денег', 'дорого', 'дёшево', 'бюджет'],
+    keywords: ['цена', 'стоимость', 'сколько', 'прайс', 'расценк', 'рубл', 'руб', 'денег', 'дорого', 'дёшево', 'бюджет', 'стоит', 'стоить', 'ценам', 'цене', 'цены'],
     answers: [
       '💰 Наши цены очень демократичные!\n\n📦 3D-печать:\n• PLA/PETG/ABS — от 8₽/грамм\n• TPU (гибкий) — от 15₽/грамм\n• Нейлон — от 25₽/грамм\n• Карбон — от 30₽/грамм\n\n🎨 3D-моделирование — 500₽/час\n📡 3D-сканирование — по запросу\n\n🎁 Скидки за объём:\n• От 10 шт — 5%\n• От 20 шт — 10%\n• От 50 шт — 15%\n\n⚡ Срочные заказы — +50%\n\nТочную стоимость рассчитаю в калькуляторе на сайте!',
     ],
@@ -183,7 +183,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   },
   // Контакты и адрес
   {
-    keywords: ['адрес', 'где находит', 'люберцы', 'гагарина', 'приехать', 'офис', 'мастерская', 'где вы'],
+    keywords: ['адрес', 'где', 'люберцы', 'гагарина', 'приехать', 'офис', 'мастерская', 'находит', 'находитесь', 'расположен', 'расположение', 'адреса', 'адресе', 'адресу', 'адресом'],
     answers: [
       '📍 Наш адрес:\n\n🏠 г. Люберцы\n🛣 проспект Гагарина, дом 21\n\n🗺 Как добраться:\n• На карте — раздел "Контакты" на сайте\n• Координаты: 55.691567, 37.911851\n\n🕐 Режим работы: по договорённости\n\nМожете приехать:\n• Для обсуждения заказа\n• Забрать готовую работу\n• Посмотреть наше оборудование\n\nПредварительно свяжитесь в Telegram или Max!',
     ],
@@ -204,7 +204,7 @@ const knowledgeBase: KnowledgeEntry[] = [
     intent: 'payment',
   },
   {
-    keywords: ['связ', 'контакт', 'телефон', 'telegram', 'телеграм', 'макс', 'написать', 'позвонить', 'связаться'],
+    keywords: ['связ', 'контакт', 'телефон', 'telegram', 'телеграм', 'макс', 'написать', 'позвонить', 'связаться', 'контакты', 'контактов', 'контактам', 'контактами', 'связи', 'связь', 'связи', 'связью', 'связей'],
     answers: [
       '📱 Свяжитесь с нами удобным способом!\n\n💬 Telegram: @ivanchay0937\n📱 Max: через кнопку на сайте\n📢 Канал: @protolab_3d_pechat\n\n⏱ Отвечаем быстро — обычно в течение часа!\n\n💡 Что обсудим:\n• Расчёт стоимости\n• Выбор материала\n• Сроки выполнения\n• Технические вопросы\n• Оформление заказа\n\nПишите — поможем с любым вопросом! 🚀',
     ],
@@ -387,9 +387,11 @@ const knowledgeBase: KnowledgeEntry[] = [
 function findAnswer(input: string, conversationHistory: Message[]): string {
   const normalizedInput = input.toLowerCase().trim();
   
-  // Проверка на очень короткие сообщения
-  if (normalizedInput.length < 2) {
-    return 'Не совсем понял вопрос 😕 Можете подробнее? Или спросите о 3D-печати, материалах, ценах!';
+  console.log('🔍 Поиск ответа для:', normalizedInput);
+  
+  // Если пустой ввод
+  if (!normalizedInput) {
+    return 'Напишите ваш вопрос! 😊';
   }
   
   // Поиск лучшего совпадения
@@ -397,50 +399,29 @@ function findAnswer(input: string, conversationHistory: Message[]): string {
   
   for (const entry of knowledgeBase) {
     let score = 0;
-    let matchedKeywords = 0;
     
     for (const keyword of entry.keywords) {
+      // Простая проверка: содержит ли ввод ключевое слово
       if (normalizedInput.includes(keyword)) {
-        // Более длинные совпадения важнее
         score += keyword.length * 2;
-        matchedKeywords++;
+        console.log(`✅ Найдено ключевое слово: "${keyword}" в "${normalizedInput}" (score: ${keyword.length * 2})`);
       }
-      // Проверка на частичное совпадение
-      else if (keyword.length > 4 && normalizedInput.split(' ').some(word => 
-        word.includes(keyword) || keyword.includes(word)
-      )) {
-        score += keyword.length * 0.5;
-      }
-    }
-    
-    // Бонус за множественные совпадения
-    if (matchedKeywords > 1) {
-      score *= 1.5;
     }
     
     if (score > 0 && (!bestMatch || score > bestMatch.score)) {
       // Выбираем случайный вариант ответа для разнообразия
       const randomAnswer = entry.answers[Math.floor(Math.random() * entry.answers.length)];
       bestMatch = { answer: randomAnswer, score, intent: entry.intent };
+      console.log(`🎯 Лучшее совпадение: intent="${entry.intent}", score=${score}`);
     }
   }
   
   if (bestMatch) {
+    console.log('✅ Возвращаем ответ:', bestMatch.answer.substring(0, 50) + '...');
     return bestMatch.answer;
   }
   
-  // Анализ контекста разговора
-  const lastBotMessage = conversationHistory.filter(m => m.role === 'bot').slice(-1)[0];
-  
-  // Если пользователь продолжает тему
-  if (lastBotMessage && normalizedInput.length < 20) {
-    const shortResponses = [
-      'Расскажите подробнее! 😊 Что именно интересует?',
-      'Понял! А какие-то конкретные вопросы есть?',
-      'Интересно! Могу рассказать больше — что именно узнать?',
-    ];
-    return shortResponses[Math.floor(Math.random() * shortResponses.length)];
-  }
+  console.log('❌ Совпадений не найдено, возвращаем fallback');
   
   // Если ничего не найдено
   const fallbackResponses = [
@@ -491,6 +472,8 @@ export default function ChatBot({ isDark }: Props) {
     const text = input.trim();
     if (!text) return;
 
+    console.log('📤 Отправка сообщения:', text);
+
     const userMessage: Message = { role: 'user', text, timestamp: Date.now() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -500,7 +483,9 @@ export default function ChatBot({ isDark }: Props) {
     // Имитация задержки "печатания"
     const delay = 600 + Math.random() * 1000;
     setTimeout(() => {
+      console.log('🔍 Вызов findAnswer для:', text);
       const answer = findAnswer(text, newMessages);
+      console.log('✅ Получен ответ:', answer.substring(0, 100));
       setMessages(prev => [...prev, { role: 'bot', text: answer, timestamp: Date.now() }]);
       setIsTyping(false);
     }, delay);
